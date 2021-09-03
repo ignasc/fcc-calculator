@@ -1,0 +1,19 @@
+#calculator, #calculator > * {
+  border: 1px solid red;
+}
+
+#calculator {
+  max-width: 500px;
+  margin: 200px auto auto auto;
+}
+
+#keypad {
+  /*each button css assignment is in .js file*/
+  display: grid;
+  grid-template-areas: 
+  "clear clear divide multiply"
+  "seven eight nine subtract"
+  "four five six add"
+  "one two three equals"
+  "zero zero decimal equals";
+}
