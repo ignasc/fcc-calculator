@@ -1,3 +1,22 @@
+const NUMBER_ZERO = "zero";
+const NUMBER_ONE = "one";
+const NUMBER_TWO = "two";
+const NUMBER_THREE = "three";
+const NUMBER_FOUR = "four";
+const NUMBER_FIVE = "five";
+const NUMBER_SIX = "six";
+const NUMBER_SEVEN = "seven";
+const NUMBER_EIGHT = "eight";
+const NUMBER_NINE = "nine";
+const NUMBER_DECIMAL = "decimal";
+
+const OPERATOR_CLEAR = "clear";
+const OPERATOR_DIVIDE = "divide";
+const OPERATOR_MULTIPLY = "multiply";
+const OPERATOR_SUBTRACT = "subtract";
+const OPERATOR_ADD = "add";
+const OPERATOR_EQUALS = "equals";
+
 /*---------- REACT  ----------*/
 class ManoApp extends React.Component {
   constructor(props) {
@@ -11,37 +30,74 @@ class ManoApp extends React.Component {
   };
 };
 
+/*---------- CALCULATOR MAIN COMPONENT  ----------*/
 class Calculator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-
+      displayValue: 1,
+      history: "",
+      valueA: null,
+      valueB: null,
+      action: null
     };
+
+    this.actionSelector=this.actionSelector.bind(this);
   };
+
+  numbers=[ /*for converting to actual number*/
+    NUMBER_ZERO,
+    NUMBER_ONE,
+    NUMBER_TWO,
+    NUMBER_THREE,
+    NUMBER_FOUR,
+    NUMBER_FIVE,
+    NUMBER_SIX,
+    NUMBER_SEVEN,
+    NUMBER_EIGHT,
+    NUMBER_NINE,
+  ];
+
+  actionSelector(action) {
+    switch(action){
+      case "clear":
+        this.setState({
+          displayValue: 0,
+          history: " "
+        });
+        break;
+      default:
+        this.setState({
+          displayValue: action,
+          history: this.state.history.concat(action)
+        });
+        break;
+    }
+  }
 
   render() {
     return (
     <div id="calculator">
-      <Display />
+      <Display displayValue={this.state.displayValue} displayHistory={this.state.history}/>
       <div id="keypad">
-        <Button id="clear" display="AC"/>
-        <Button id="divide" display="/"/>
-        <Button id="multiply" display="*"/>
-        <Button id="subtract" display="-"/>
-        <Button id="add" display="+"/>
-        <Button id="equals" display="="/>
-        <Button id="decimal" display="."/>
+        <Button id={OPERATOR_CLEAR} display="AC" action={this.actionSelector}/>
+        <Button id={OPERATOR_DIVIDE} display="/" action={this.actionSelector}/>
+        <Button id={OPERATOR_MULTIPLY} display="*" action={this.actionSelector}/>
+        <Button id={OPERATOR_SUBTRACT} display="-" action={this.actionSelector}/>
+        <Button id={OPERATOR_ADD} display="+" action={this.actionSelector}/>
+        <Button id={OPERATOR_EQUALS} display="=" action={this.actionSelector}/>
+        <Button id={NUMBER_DECIMAL} display="." action={this.actionSelector}/>
 
-        <Button id="one" display="1"/>
-        <Button id="two" display="2"/>
-        <Button id="three" display="3"/>
-        <Button id="four" display="4"/>
-        <Button id="five" display="5"/>
-        <Button id="six" display="6"/>
-        <Button id="seven" display="7"/>
-        <Button id="eight" display="8"/>
-        <Button id="nine" display="9"/>
-        <Button id="zero" display="0"/>
+        <Button id={NUMBER_ONE} display="1" action={this.actionSelector}/>
+        <Button id={NUMBER_TWO} display="2" action={this.actionSelector}/>
+        <Button id={NUMBER_THREE} display="3" action={this.actionSelector}/>
+        <Button id={NUMBER_FOUR} display="4" action={this.actionSelector}/>
+        <Button id={NUMBER_FIVE} display="5" action={this.actionSelector}/>
+        <Button id={NUMBER_SIX} display="6" action={this.actionSelector}/>
+        <Button id={NUMBER_SEVEN} display="7" action={this.actionSelector}/>
+        <Button id={NUMBER_EIGHT} display="8" action={this.actionSelector}/>
+        <Button id={NUMBER_NINE} display="9" action={this.actionSelector}/>
+        <Button id={NUMBER_ZERO} display="0" action={this.actionSelector}/>
       </div>
     </div>
     )
@@ -49,6 +105,7 @@ class Calculator extends React.Component {
 
 };
 
+/*---------- DISPLAY COMPONENT  ----------*/
 class Display extends React.Component {
   constructor(props) {
     super(props);
@@ -56,14 +113,15 @@ class Display extends React.Component {
 
   render() {
     return(
-      <div id="display">
-        <div>Formula</div>
-        <div>Answer</div>
+      <div>
+        <div id="displayHistory">{this.props.displayHistory}</div>
+        <div id="display">{this.props.displayValue}</div>
       </div>
     );
   };
 };
 
+/*---------- BUTTON COMPONENT  ----------*/
 class Button extends React.Component {
   constructor(props) {
     super(props);
@@ -77,7 +135,7 @@ class Button extends React.Component {
     };
 
     return(
-      <button id={this.props.id} style={styling}>{this.props.display}</button>
+      <button id={this.props.id} onClick={() => this.props.action(this.props.id)} style={styling}>{this.props.display}</button>
     );
   };
 };
