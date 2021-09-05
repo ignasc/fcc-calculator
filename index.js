@@ -17,6 +17,17 @@ const OPERATOR_SUBTRACT = "subtract";
 const OPERATOR_ADD = "add";
 const OPERATOR_EQUALS = "equals";
 
+/*app initial state as constant as it is used in clearing calculator*/
+const INITIAL_STATE = {
+  displayValue: 0,
+  history: "-",
+  valueA: "",
+  valueB: "",
+  action: "",
+  answer: "",
+  firstDigitEntered: false
+};
+
 /*---------- REACT  ----------*/
 class ManoApp extends React.Component {
   constructor(props) {
@@ -34,46 +45,111 @@ class ManoApp extends React.Component {
 class Calculator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      displayValue: 1,
-      history: "",
-      valueA: null,
-      valueB: null,
-      action: null
-    };
+    this.state = INITIAL_STATE;
 
     this.actionSelector=this.actionSelector.bind(this);
   };
 
-  numbers=[ /*for converting to actual number*/
-    NUMBER_ZERO,
-    NUMBER_ONE,
-    NUMBER_TWO,
-    NUMBER_THREE,
-    NUMBER_FOUR,
-    NUMBER_FIVE,
-    NUMBER_SIX,
-    NUMBER_SEVEN,
-    NUMBER_EIGHT,
-    NUMBER_NINE,
-  ];
+  /*converting constants to digital numbers*/
+  convertToNumber(number) {
+    switch(number){
+      case NUMBER_ZERO:
+        return 0;
+      case NUMBER_ONE:
+        return 1;
+      case NUMBER_TWO:
+        return 2;
+      case NUMBER_THREE:
+        return 3;
+      case NUMBER_FOUR:
+        return 4;
+      case NUMBER_FIVE:
+        return 5;
+      case NUMBER_SIX:
+        return 6;
+      case NUMBER_SEVEN:
+        return 7;
+      case NUMBER_EIGHT:
+        return 8;
+      case NUMBER_NINE:
+        return 9;
+      case OPERATOR_DIVIDE:
+        return "/";
+      case OPERATOR_MULTIPLY:
+        return "*";
+      case OPERATOR_SUBTRACT:
+        return "-";
+      case OPERATOR_ADD:
+        return "+";
+      case OPERATOR_EQUALS:
+        return "=";
+      case NUMBER_DECIMAL:
+        return ".";
+      default:
+        return number;
+    };
+  };
+
+  /*formating values for display and setting state*/
+  setDisplay(firstValue, secondValue, operator, firstDigitEntered) {
+    this.setState({
+      history: firstValue + this.convertToNumber(operator) + secondValue,
+      displayValue: firstDigitEntered ? secondValue : firstValue,
+      valueA: firstValue,
+      valueB: secondValue,
+      action: operator,
+      firstDigitEntered: firstDigitEntered
+    });
+    
+  };
 
   actionSelector(action) {
+
+    if(action == OPERATOR_CLEAR) {
+      this.setState(INITIAL_STATE);
+      return;
+    };
+
+    let firstValue = this.state.valueA;
+    let secondValue = this.state.valueB;
+    let operator = this.state.action;
+    let firstDigitEntered = this.state.firstDigitEntered;
+    
+
     switch(action){
-      case "clear":
-        this.setState({
-          displayValue: 0,
-          history: " "
-        });
+      case OPERATOR_ADD:
+        operator = OPERATOR_ADD;
+        firstDigitEntered = true;
+        break;
+      case OPERATOR_SUBTRACT:
+        operator = OPERATOR_SUBTRACT;
+        firstDigitEntered = true;
+        break;
+      case OPERATOR_DIVIDE:
+        operator = OPERATOR_DIVIDE;
+        firstDigitEntered = true;
+        break;
+      case OPERATOR_MULTIPLY:
+        operator = OPERATOR_MULTIPLY;
+        firstDigitEntered = true;
+        break;
+      case OPERATOR_EQUALS:
+        console.log("Answer calculation to be implemented");
         break;
       default:
-        this.setState({
-          displayValue: action,
-          history: this.state.history.concat(action)
-        });
+        if(this.state.firstDigitEntered) {
+          secondValue = secondValue.concat(this.convertToNumber(action));
+        } else {
+          firstValue = firstValue.concat(this.convertToNumber(action));
+        };
         break;
-    }
-  }
+    };
+
+    this.setDisplay(firstValue, secondValue, operator, firstDigitEntered);
+
+    
+    console.log(this.state);
+  };
 
   render() {
     return (
