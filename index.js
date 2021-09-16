@@ -103,11 +103,48 @@ class Calculator extends React.Component {
     
   };
 
+  /*
+  Persidaryti programa:
+  - Regex, aprašantis skaičių(priekyje minusas arba nulis tik vienas, vienas taškas etc.)
+  - Pradinėje sąlygoje pirmas skaičius visada nulis
+  - Kai įvedamas operatorius, tada pradedamas vesti sekantis skaičius
+  - Antro skaičiaus pradinė vertė automatiškai yra pirmas skaičius po to, kai įvedamas operatorius,
+  tačiau, jei bus vedamas naujas skaičius - overwrite originalą. O kablelio ar minuso atveju nedaryti
+  overwrite.
+  - Kai įvedamas operatorius antro skaičiaus metu, automatiškai atliekamas prieš tai įvestas matematinis veiksmas,
+  ir gautas atsakymas automatiškai priskiriamas prie pirmo skaičiaus, plius įvedamas iš karto operatorius ir
+  tuomet vedamas antras skaičius.
+
+  Bonus points: skaičius su minuso ženklu automatiškai apskliaudžiamas.
+  PSEUDOKODAS:
+  Paspaudus betkurį mygtuką, tikrinama esama skaičiaus vertė su paspaustu simboliu per regex.
+    Jei regex tenkina, tuomet ta skaičiu priskiriame prie displayValue.
+    Jei netenkina - ignoruojam mygtuko paspaudimą ir atšaukiam visą likusią operaciją.
+  Paspaudus operatoriaus mygtuką:
+    Pirmiausia tikriname, ar jau yra įvestas pirmas skaičius, ar dar ne
+      Jei įvestas, pirmiausia patikriname, ar operatorius paspaustas "-", tokiu atveju antras skaičius padauginamas iš -1, kad pakeisto jo ženklą.
+      Tuomet pirmiausia atliekame operaciją su skaičiais, gautą atsakymą priskiriame prie pirmojo kintamojo ir prie action priskiriame operatorių, kurį paspaudėme antrąkart.
+      Jei pirmas skaičius nebuvo įvestas, tuomet esama displayValue vertė priskiriama prie valueA.
+      Atitinkamas operatorius priskiriamas prie action
+  
+      regex:
+      Pirmas simbolis gali būti belekoks skaičius.
+      Jei pirmas simbolis 0: antras simbolis tik taškas.
+      Jei pirmas simbolis kitas skaičius: toliau gali būti belekiek skaičių.
+      Skaičiuje gali egzistuoti tik vienas taškas.
+
+  */
+
+  /*clear calculator*/
+  clearCalc() {
+    this.setState(INITIAL_STATE);
+  }
+
   actionSelector(action) {
 
+    /*clear calculator*/
     if(action == OPERATOR_CLEAR) {
-      this.setState(INITIAL_STATE);
-      return;
+      this.clearCalc;
     };
 
     let firstValue = this.state.valueA;
