@@ -135,6 +135,29 @@ class Calculator extends React.Component {
 
   */
 
+  /*check if number format is correct with regex*/
+  checkNumber(currentNumber, pressedNumber) {
+    /*NOTE: these regex variables are made so that they will accept correct order in
+    which numbers are constructed, either 0.x or x.x, where x is any number.
+    So first will pass with 0 -> 0. -> 0.x, but will not accept 00. or 0x etc.
+    Second one will pass with any digit except 0 at start, followed by any numbers, dot and numbers again.
+    */
+    let zeroNumberRegex = /^0$|^0[.]$|^0[.]\d+$/; /*0.xxxxxx*/
+    let anyNumberRegex = /^[1-9]\d*$|^[1-9]\d*[.]?$|^[1-9]\d*[.]?\d+$/; /*any other number*/
+    let testNumber = "";
+
+    /*construct number with a pressed symbol for testing it, before approving*/
+    testNumber = currentNumber.concat(this.convertToNumber(pressedNumber));
+    /*check if the number passes regex tests and return true or false*/
+    if (zeroNumberRegex.test(testNumber)||anyNumberRegex.test(testNumber)) {
+      console.log("Regex test passed");
+      return true;
+    } else {
+      console.log("Regex test failed");
+      return false;
+    };
+  };
+
   /*clear calculator*/
   clearCalc() {
     this.setState(INITIAL_STATE);
@@ -144,7 +167,8 @@ class Calculator extends React.Component {
 
     /*clear calculator*/
     if(action == OPERATOR_CLEAR) {
-      this.clearCalc;
+      this.clearCalc();
+      return;
     };
 
     let firstValue = this.state.valueA;
@@ -174,9 +198,9 @@ class Calculator extends React.Component {
         console.log("Answer calculation to be implemented");
         break;
       default:
-        if(this.state.firstDigitEntered) {
+        if(this.state.firstDigitEntered && this.checkNumber(secondValue, action)) {
           secondValue = secondValue.concat(this.convertToNumber(action));
-        } else {
+        } else if (!this.state.firstDigitEntered && this.checkNumber(firstValue, action)) {
           firstValue = firstValue.concat(this.convertToNumber(action));
         };
         break;
