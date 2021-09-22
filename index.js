@@ -164,7 +164,6 @@ class Calculator extends React.Component {
   }
 
   actionSelector(action) {
-
     /*clear calculator*/
     if(action == OPERATOR_CLEAR) {
       this.clearCalc();
@@ -196,6 +195,7 @@ class Calculator extends React.Component {
         break;
       case OPERATOR_EQUALS:
         console.log("Answer calculation to be implemented");
+        this.actionExecution(operator, this.state.valueA, this.state.valueB);
         break;
       default:
         if(this.state.firstDigitEntered && this.checkNumber(secondValue, action)) {
@@ -210,6 +210,29 @@ class Calculator extends React.Component {
 
     
     console.log(this.state);
+  };
+
+  actionExecution(action, valueA, valueB){
+    let digitA = parseFloat(valueA);
+    let digitB = parseFloat(valueB);
+    switch(action){
+      case OPERATOR_ADD:
+        console.log("add up numbers: " + (digitA + digitB));
+        this.setState({displayValue: digitA + digitB});/* NEVEIKIA */
+        break;
+      case OPERATOR_SUBTRACT:
+        console.log("subtract numbers: " + (digitA - digitB));
+        break;
+      case OPERATOR_DIVIDE:
+        console.log("divide numbers: " + (digitA / digitB));
+        break;
+      case OPERATOR_MULTIPLY:
+        console.log("multiply numbers: " + (digitA * digitB));
+        break;
+      default:
+        console.log("WARNING: default case executed in actionExecution()");
+        break;
+    };
   };
 
   render() {
