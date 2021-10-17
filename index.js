@@ -19,13 +19,18 @@ const OPERATOR_EQUALS = "equals";
 
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
-  displayValue: 0,
-  history: "-",
+  /*Values for display*/
+  history: "-", /*top digit (history) on calculator display*/
+  displayCurrentValue: 0, /*bottom digit on calculator display*/
+  displayOperatorSign: "",
+  /*Values for calculation*/
   valueA: "",
   valueB: "",
-  action: "",
+  actionOperator: "",
   answer: "",
   firstDigitEntered: false,
+  secondDigitEntered: false,
+  equalOperator: false,
   negativeNumber: false
 };
 
@@ -96,61 +101,6 @@ class Calculator extends React.Component {
     this.setState(INITIAL_STATE);
   }
 
-  /*formating values for display and setting state*/
-  setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber) {
-    this.setState((state) => {
-      let negativeSign = "";
-      let frontBracket = "";
-      let backBracket = "";
-      if(state.negativeNumber){
-        negativeSign = "-";
-        frontBracket = "("
-        backBracket = ")";
-      }
-      return {
-      history: firstValue + this.convertToNumber(operator) + frontBracket + negativeSign + secondValue + backBracket,
-      displayValue: state.answer != "" ? state.answer : firstDigitEntered ? negativeSign + secondValue : firstValue,
-      valueA: firstValue,
-      valueB: secondValue,
-      action: operator,
-      firstDigitEntered: firstDigitEntered,
-      }
-    });
-    
-  };
-
-  /*
-  Persidaryti programa:
-  - Regex, aprašantis skaičių(priekyje minusas arba nulis tik vienas, vienas taškas etc.)
-  - Pradinėje sąlygoje pirmas skaičius visada nulis
-  - Kai įvedamas operatorius, tada pradedamas vesti sekantis skaičius
-  - Antro skaičiaus pradinė vertė automatiškai yra pirmas skaičius po to, kai įvedamas operatorius,
-  tačiau, jei bus vedamas naujas skaičius - overwrite originalą. O kablelio ar minuso atveju nedaryti
-  overwrite.
-  - Kai įvedamas operatorius antro skaičiaus metu, automatiškai atliekamas prieš tai įvestas matematinis veiksmas,
-  ir gautas atsakymas automatiškai priskiriamas prie pirmo skaičiaus, plius įvedamas iš karto operatorius ir
-  tuomet vedamas antras skaičius.
-
-  Bonus points: skaičius su minuso ženklu automatiškai apskliaudžiamas.
-  PSEUDOKODAS:
-  Paspaudus betkurį mygtuką, tikrinama esama skaičiaus vertė su paspaustu simboliu per regex.
-    Jei regex tenkina, tuomet ta skaičiu priskiriame prie displayValue.
-    Jei netenkina - ignoruojam mygtuko paspaudimą ir atšaukiam visą likusią operaciją.
-  Paspaudus operatoriaus mygtuką:
-    Pirmiausia tikriname, ar jau yra įvestas pirmas skaičius, ar dar ne
-      Jei įvestas, pirmiausia patikriname, ar operatorius paspaustas "-", tokiu atveju antras skaičius padauginamas iš -1, kad pakeisto jo ženklą.
-      Tuomet pirmiausia atliekame operaciją su skaičiais, gautą atsakymą priskiriame prie pirmojo kintamojo ir prie action priskiriame operatorių, kurį paspaudėme antrąkart.
-      Jei pirmas skaičius nebuvo įvestas, tuomet esama displayValue vertė priskiriama prie valueA.
-      Atitinkamas operatorius priskiriamas prie action
-  
-      regex:
-      Pirmas simbolis gali būti belekoks skaičius.
-      Jei pirmas simbolis 0: antras simbolis tik taškas.
-      Jei pirmas simbolis kitas skaičius: toliau gali būti belekiek skaičių.
-      Skaičiuje gali egzistuoti tik vienas taškas.
-
-  */
-
   /*check if number format is correct with regex*/
   checkNumber(currentNumber, pressedNumber) {
     /*NOTE: these regex variables are made so that they will accept correct order in
@@ -166,114 +116,190 @@ class Calculator extends React.Component {
     testNumber = currentNumber.concat(this.convertToNumber(pressedNumber));
     /*check if the number passes regex tests and return true or false*/
     if (zeroNumberRegex.test(testNumber)||anyNumberRegex.test(testNumber)) {
-      console.log("Regex test passed");
       return true;
     } else {
-      console.log("Regex test failed");
       return false;
     };
   };
 
-  actionSelector(action) {
+  /*SELECT OPERATOR*/
+  actionSelector(actionID){
+    console.log("actionSelector(" + actionID + ")");
+    let firstValue;
+    let secondValue;
+    let operator;
+    let firstDigitEntered;
+    let secondDigitEntered;
+    let negativeNumber;
+
     /*clear calculator*/
-    if(action == OPERATOR_CLEAR) {
+    if(actionID == OPERATOR_CLEAR) {
       this.clearCalc();
       return;
     };
 
-    let firstValue = this.state.valueA;
-    let secondValue = this.state.valueB;
-    let operator = this.state.action;
-    let firstDigitEntered = this.state.firstDigitEntered;
-    let negativeNumber = this.state.negativeNumber;
-    
+    firstValue = this.state.valueA;
+    secondValue = this.state.valueB;
+    operator = this.state.actionOperator;
+    firstDigitEntered = this.state.firstDigitEntered;
+    secondDigitEntered = this.state.secondDigitEntered;
+    negativeNumber = this.state.negativeNumber;
 
-    switch(action){
+    switch(actionID){
       case OPERATOR_ADD:
         operator = OPERATOR_ADD;
+        if(firstDigitEntered && this.state.valueB != ""){
+          secondDigitEntered = true;
+        };
         firstDigitEntered = true;
         break;
       case OPERATOR_SUBTRACT:
-
-        if(firstDigitEntered){/* for making negative number */
-          this.setState({negativeNumber: true})
-          break;
-        }
         operator = OPERATOR_SUBTRACT;
+        if(firstDigitEntered && this.state.valueB != ""){
+          secondDigitEntered = true;
+        };
         firstDigitEntered = true;
         break;
       case OPERATOR_DIVIDE:
         operator = OPERATOR_DIVIDE;
+        if(firstDigitEntered && this.state.valueB != ""){
+          secondDigitEntered = true;
+        };
         firstDigitEntered = true;
         break;
       case OPERATOR_MULTIPLY:
         operator = OPERATOR_MULTIPLY;
+        if(firstDigitEntered && this.state.valueB != ""){
+          secondDigitEntered = true;
+        };
         firstDigitEntered = true;
         break;
       case OPERATOR_EQUALS:
-        console.log("Answer calculation to be implemented");
-        this.actionExecution(operator, this.state.valueA, this.state.valueB, this.state.negativeNumber);
+        if(!this.state.firstDigitEntered || this.state.secondDigitEntered){
+          break;
+        };
+        this.setState((state) => {
+          return {
+          equalOperator: true,
+          firstDigitEntered: firstDigitEntered,
+          secondDigitEntered: secondDigitEntered
+          };
+        });
         break;
       default:
-        if(this.state.firstDigitEntered && this.checkNumber(secondValue, action)) {
-          secondValue = secondValue.concat(this.convertToNumber(action));
-        } else if (!this.state.firstDigitEntered && this.checkNumber(firstValue, action)) {
-          firstValue = firstValue.concat(this.convertToNumber(action));
+        if(this.state.firstDigitEntered && this.checkNumber(secondValue, actionID)) {
+          secondValue = secondValue.concat(this.convertToNumber(actionID));
+        } else if (!this.state.firstDigitEntered && this.checkNumber(firstValue, actionID)) {
+          firstValue = firstValue.concat(this.convertToNumber(actionID));
         };
         break;
     };
 
-    this.setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber);
-
-    
+    /*queue current actions to be executed*/
+    this.setState((state)=>{
+      return {
+        valueA: firstValue,
+        valueB: secondValue,
+        actionOperator: operator,
+        firstDigitEntered: firstDigitEntered,
+        secondDigitEntered: secondDigitEntered
+      };
+    });
+    /*execute current actions*/
+    this.executeActions(this.state);
+    /*display values on calculator*/
+    this.displayValues();
     console.log(this.state);
   };
 
-  actionExecution(action, valueA, valueB, negativeSign){
-    let digitA = parseFloat(valueA);
-    let digitB = parseFloat(valueB);
+  /*EXECUTE ACTIONS*/
+  executeActions(state, newOperator = ""){
+    /*check if action execution is valid and possible*/
+    let falseAction = true;
+    let immediateOperatorAssign = newOperator;
 
-    if(negativeSign) {
+    if(state.equalOperator){
+      falseAction = false;
+    };
+
+    if(state.valueA != "" && state.valueB != "" && state.equalOperator){
+      falseAction = false;
+    };
+
+    if(state.valueA != "" && state.valueB != "" && !state.equalOperator && state.actionOperator != ""){
+      falseAction = false;
+    };
+
+    if(falseAction){
+      return;
+    };
+    /*END of checking action execution validity*/
+
+    /*executing operations*/
+    let digitA = parseFloat(state.valueA);
+    let digitB = parseFloat(state.valueB);
+    let finalAnswer;
+
+    if(state.negativeNumber) {
       digitB *= -1;
     }
 
-    switch(action){
+    switch(state.actionOperator){
       case OPERATOR_ADD:
-        this.setState({answer: digitA + digitB});
+        finalAnswer = digitA + digitB;
         break;
       case OPERATOR_SUBTRACT:
-        this.setState({answer: digitA - digitB});
+        finalAnswer = digitA - digitB;
         break;
       case OPERATOR_DIVIDE:
-        this.setState({answer: digitA / digitB});
+        finalAnswer = digitA / digitB;
         break;
       case OPERATOR_MULTIPLY:
-        this.setState({answer: digitA * digitB});
+        finalAnswer = digitA * digitB;
         break;
       default:
         console.log("WARNING: default case executed in actionExecution()");
         break;
     };
-
-    /*after operation with digits is performed, clear calculator and asign answer to the first digit*/
-    /*this function can be optimised, no need to have separate answer variable in state */
-    this.setState((state) => {
-      let answer = state.answer;
+    console.log("immediateOperatorAssign:" + immediateOperatorAssign); /* DEBUG */
+    /*final state update*/
+    this.setState((immediateOperatorAssign) => {
+      let instantOperator = "";
+      if(immediateOperatorAssign != ""){
+        instantOperator = immediateOperatorAssign; /* NEVEIKIA chain operator assign kazkodel - priskiria tuscia reikala arba objekta ir reikia antrakart spausti operatoriu, kad butu gerai */      };
       return {
-        displayValue: answer,
-        valueA: answer,
+        answer: finalAnswer,
+        valueA: finalAnswer,
         valueB: "",
-        action: "",
-        firstDigitEntered: false
+        firstDigitEntered: true,
+        equalOperator: false,
+        negativeNumber: false,
+        actionOperator: instantOperator
       };
     });
+  };
 
+  /*DISPLAY VALUES*/
+  displayValues(){
+    this.setState((state) => {
+      let firstNumber = state.valueA;
+      let secondNumber = state.valueB;
+      let actionOperator = state.actionOperator;
+      let history = "";
+      /*construct history value*/
+      history = firstNumber + actionOperator + secondNumber;
+
+      return {
+        displayCurrentValue: state.valueA,
+        history: history
+      };
+    });
   };
 
   render() {
     return (
     <div id="calculator">
-      <Display displayValue={this.state.displayValue} displayHistory={this.state.history}/>
+      <Display displayValue={this.state.displayCurrentValue} displayHistory={this.state.history}/>
       <div id="keypad">
         <Button id={OPERATOR_CLEAR} display="AC" action={this.actionSelector}/>
         <Button id={OPERATOR_DIVIDE} display="/" action={this.actionSelector}/>
@@ -347,7 +373,7 @@ ReactDOM.render(
 
 
   /*
-  const NUMBER_ZERO = "zero";
+const NUMBER_ZERO = "zero";
 const NUMBER_ONE = "one";
 const NUMBER_TWO = "two";
 const NUMBER_THREE = "three";
@@ -374,7 +400,8 @@ const INITIAL_STATE = {
   valueB: "",
   action: "",
   answer: "",
-  firstDigitEntered: false
+  firstDigitEntered: false,
+  negativeNumber: false
 };
 
 /*---------- REACT  ----------*
@@ -439,16 +466,29 @@ class Calculator extends React.Component {
     };
   };
 
+  /*clear calculator*
+  clearCalc() {
+    this.setState(INITIAL_STATE);
+  }
+
   /*formating values for display and setting state*
-  setDisplay(firstValue, secondValue, operator, firstDigitEntered) {
+  setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber) {
     this.setState((state) => {
+      let negativeSign = "";
+      let frontBracket = "";
+      let backBracket = "";
+      if(state.negativeNumber){
+        negativeSign = "-";
+        frontBracket = "("
+        backBracket = ")";
+      }
       return {
-      history: firstValue + this.convertToNumber(operator) + secondValue,
-      displayValue: state.answer != "" ? state.answer : firstDigitEntered ? secondValue : firstValue,
+      history: firstValue + this.convertToNumber(operator) + frontBracket + negativeSign + secondValue + backBracket,
+      displayValue: state.answer != "" ? state.answer : firstDigitEntered ? negativeSign + secondValue : firstValue,
       valueA: firstValue,
       valueB: secondValue,
       action: operator,
-      firstDigitEntered: firstDigitEntered
+      firstDigitEntered: firstDigitEntered,
       }
     });
     
@@ -509,30 +549,40 @@ class Calculator extends React.Component {
     };
   };
 
-  /*clear calculator*
-  clearCalc() {
-    this.setState(INITIAL_STATE);
-  }
-
   actionSelector(action) {
+    let firstValue;
+    let secondValue;
+    let operator;
+    let firstDigitEntered;
+    let negativeNumber;
+
     /*clear calculator*
     if(action == OPERATOR_CLEAR) {
       this.clearCalc();
       return;
     };
 
-    let firstValue = this.state.valueA;
-    let secondValue = this.state.valueB;
-    let operator = this.state.action;
-    let firstDigitEntered = this.state.firstDigitEntered;
+    firstValue = this.state.valueA;
+    secondValue = this.state.valueB;
+    operator = this.state.action;
+    firstDigitEntered = this.state.firstDigitEntered;
+    negativeNumber = this.state.negativeNumber;
     
 
     switch(action){
       case OPERATOR_ADD:
         operator = OPERATOR_ADD;
+        if(secondValue!=""){
+          this.actionExecution(operator, this.state.valueA, this.state.valueB, this.state.negativeNumber);
+          break;
+        };
         firstDigitEntered = true;
         break;
       case OPERATOR_SUBTRACT:
+        if(firstDigitEntered){/* for making negative number *
+          this.setState({negativeNumber: true})
+          break;
+        }
         operator = OPERATOR_SUBTRACT;
         firstDigitEntered = true;
         break;
@@ -545,8 +595,7 @@ class Calculator extends React.Component {
         firstDigitEntered = true;
         break;
       case OPERATOR_EQUALS:
-        console.log("Answer calculation to be implemented");
-        this.actionExecution(operator, this.state.valueA, this.state.valueB);
+        this.actionExecution(operator, this.state.valueA, this.state.valueB, this.state.negativeNumber);
         break;
       default:
         if(this.state.firstDigitEntered && this.checkNumber(secondValue, action)) {
@@ -557,15 +606,21 @@ class Calculator extends React.Component {
         break;
     };
 
-    this.setDisplay(firstValue, secondValue, operator, firstDigitEntered);
+
+    this.setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber);
 
     
     console.log(this.state);
   };
 
-  actionExecution(action, valueA, valueB){
+  actionExecution(action, valueA, valueB, negativeSign){
     let digitA = parseFloat(valueA);
     let digitB = parseFloat(valueB);
+
+    if(negativeSign) {
+      digitB *= -1;
+    }
+
     switch(action){
       case OPERATOR_ADD:
         this.setState({answer: digitA + digitB});
@@ -586,14 +641,18 @@ class Calculator extends React.Component {
 
     /*after operation with digits is performed, clear calculator and asign answer to the first digit*/
     /*this function can be optimised, no need to have separate answer variable in state *
+    
     this.setState((state) => {
       let answer = state.answer;
+      console.log("before update:");
+      console.log(state);
       return {
         displayValue: answer,
         valueA: answer,
         valueB: "",
         action: "",
-        firstDigitEntered: true
+        firstDigitEntered: false,
+        TESTAS: "TESTAS"
       };
     });
 
