@@ -31,7 +31,8 @@ const INITIAL_STATE = {
   firstDigitEntered: false,
   secondDigitEntered: false,
   equalOperator: false,
-  negativeNumber: false
+  negativeNumber: false,
+  previousOperator: ""
 };
 
 /*---------- REACT  ----------*/
@@ -131,6 +132,8 @@ class Calculator extends React.Component {
     let firstDigitEntered;
     let secondDigitEntered;
     let negativeNumber;
+    let immediateOperationFollows; /*in case we press operator other than =*/
+    let previousOperator; /*first operator to execute before immediate next operator*/
 
     /*clear calculator*/
     if(actionID == OPERATOR_CLEAR) {
@@ -144,6 +147,8 @@ class Calculator extends React.Component {
     firstDigitEntered = this.state.firstDigitEntered;
     secondDigitEntered = this.state.secondDigitEntered;
     negativeNumber = this.state.negativeNumber;
+    immediateOperationFollows = false;
+    previousOperator = this.state.actionOperator;
 
     switch(actionID){
       case OPERATOR_ADD:
@@ -185,6 +190,7 @@ class Calculator extends React.Component {
           secondDigitEntered: secondDigitEntered
           };
         });
+        previousOperator = "";
         break;
       default:
         if(this.state.firstDigitEntered && this.checkNumber(secondValue, actionID)) {
@@ -202,10 +208,28 @@ class Calculator extends React.Component {
         valueB: secondValue,
         actionOperator: operator,
         firstDigitEntered: firstDigitEntered,
-        secondDigitEntered: secondDigitEntered
+        secondDigitEntered: secondDigitEntered,
+        previousOperator: previousOperator
       };
     });
-    /*execute current actions*/
+    /*execute current actions (including one followed by another operator)*/
+    /*first check if we already have operator pending and we pressed new operator*/
+    if(this.state.previousOperator != ""){
+      let saveCurrentOperator = this.state.actionOperator;
+      this.setState((state) => {
+        return {
+        actionOperator: state.previousOperator
+        }
+      });
+
+      this.executeActions(this.state);
+
+      this.setState(
+        {
+        actionOperator: saveCurrentOperator
+        }
+      );
+    };
     this.executeActions(this.state);
     /*display values on calculator*/
     this.displayValues();
@@ -213,10 +237,9 @@ class Calculator extends React.Component {
   };
 
   /*EXECUTE ACTIONS*/
-  executeActions(state, newOperator = ""){
+  executeActions(state){
     /*check if action execution is valid and possible*/
     let falseAction = true;
-    let immediateOperatorAssign = newOperator;
 
     if(state.equalOperator){
       falseAction = false;
@@ -261,22 +284,20 @@ class Calculator extends React.Component {
         console.log("WARNING: default case executed in actionExecution()");
         break;
     };
-    console.log("immediateOperatorAssign:" + immediateOperatorAssign); /* DEBUG */
+    
     /*final state update*/
-    this.setState((immediateOperatorAssign) => {
-      let instantOperator = "";
-      if(immediateOperatorAssign != ""){
-        instantOperator = immediateOperatorAssign; /* NEVEIKIA chain operator assign kazkodel - priskiria tuscia reikala arba objekta ir reikia antrakart spausti operatoriu, kad butu gerai */      };
-      return {
+    this.setState(
+      {
         answer: finalAnswer,
         valueA: finalAnswer,
         valueB: "",
         firstDigitEntered: true,
+        secondDigitEntered: false,
         equalOperator: false,
         negativeNumber: false,
-        actionOperator: instantOperator
-      };
-    });
+        actionOperator: ""
+      }
+    );
   };
 
   /*DISPLAY VALUES*/
