@@ -19,20 +19,15 @@ const OPERATOR_EQUALS = "equals";
 
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
-  /*Values for display*/
-  history: "-", /*top digit (history) on calculator display*/
-  displayCurrentValue: 0, /*bottom digit on calculator display*/
-  displayOperatorSign: "",
-  /*Values for calculation*/
-  valueA: "",
-  valueB: "",
-  actionOperator: "",
-  answer: "",
+  firstDigit: "",
+  secondDigit: "",
+  digitToAppend: "",
+
   firstDigitEntered: false,
   secondDigitEntered: false,
-  equalOperator: false,
-  negativeNumber: false,
-  previousOperator: ""
+  negativeSign: false,
+
+  operatorSelected: ""
 };
 
 /*---------- REACT  ----------*/
@@ -125,15 +120,6 @@ class Calculator extends React.Component {
 
   /*SELECT OPERATOR*/
   actionSelector(actionID){
-    console.log("actionSelector(" + actionID + ")");
-    let firstValue;
-    let secondValue;
-    let operator;
-    let firstDigitEntered;
-    let secondDigitEntered;
-    let negativeNumber;
-    let immediateOperationFollows; /*in case we press operator other than =*/
-    let previousOperator; /*first operator to execute before immediate next operator*/
 
     /*clear calculator*/
     if(actionID == OPERATOR_CLEAR) {
@@ -141,180 +127,62 @@ class Calculator extends React.Component {
       return;
     };
 
-    firstValue = this.state.valueA;
-    secondValue = this.state.valueB;
-    operator = this.state.actionOperator;
-    firstDigitEntered = this.state.firstDigitEntered;
-    secondDigitEntered = this.state.secondDigitEntered;
-    negativeNumber = this.state.negativeNumber;
-    immediateOperationFollows = false;
-    previousOperator = this.state.actionOperator;
-
     switch(actionID){
       case OPERATOR_ADD:
-        operator = OPERATOR_ADD;
-        if(firstDigitEntered && this.state.valueB != ""){
-          secondDigitEntered = true;
+
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
         };
-        firstDigitEntered = true;
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_SUBTRACT:
-        operator = OPERATOR_SUBTRACT;
-        if(firstDigitEntered && this.state.valueB != ""){
-          secondDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
         };
-        firstDigitEntered = true;
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_DIVIDE:
-        operator = OPERATOR_DIVIDE;
-        if(firstDigitEntered && this.state.valueB != ""){
-          secondDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
         };
-        firstDigitEntered = true;
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_MULTIPLY:
-        operator = OPERATOR_MULTIPLY;
-        if(firstDigitEntered && this.state.valueB != ""){
-          secondDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
         };
-        firstDigitEntered = true;
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_EQUALS:
-        if(!this.state.firstDigitEntered || this.state.secondDigitEntered){
-          break;
-        };
+        this.setState({operatorSelected: actionID});
+        break;
+      default:
         this.setState((state) => {
-          return {
-          equalOperator: true,
-          firstDigitEntered: firstDigitEntered,
-          secondDigitEntered: secondDigitEntered
-          };
+          return {digitToAppend: state.digitToAppend.concat(actionID)}
         });
-        previousOperator = "";
-        break;
-      default:
-        if(this.state.firstDigitEntered && this.checkNumber(secondValue, actionID)) {
-          secondValue = secondValue.concat(this.convertToNumber(actionID));
-        } else if (!this.state.firstDigitEntered && this.checkNumber(firstValue, actionID)) {
-          firstValue = firstValue.concat(this.convertToNumber(actionID));
-        };
         break;
     };
 
-    /*queue current actions to be executed*/
-    this.setState((state)=>{
-      return {
-        valueA: firstValue,
-        valueB: secondValue,
-        actionOperator: operator,
-        firstDigitEntered: firstDigitEntered,
-        secondDigitEntered: secondDigitEntered,
-        previousOperator: previousOperator
-      };
-    });
-    /*execute current actions (including one followed by another operator)*/
-    /*first check if we already have operator pending and we pressed new operator*/
-    if(this.state.previousOperator != ""){
-      let saveCurrentOperator = this.state.actionOperator;
-      this.setState((state) => {
-        return {
-        actionOperator: state.previousOperator
-        }
-      });
-
-      this.executeActions(this.state);
-
-      this.setState(
-        {
-        actionOperator: saveCurrentOperator
-        }
-      );
-    };
-    this.executeActions(this.state);
-    /*display values on calculator*/
-    this.displayValues();
-    console.log(this.state);
-  };
-
-  /*EXECUTE ACTIONS*/
-  executeActions(state){
-    /*check if action execution is valid and possible*/
-    let falseAction = true;
-
-    if(state.equalOperator){
-      falseAction = false;
-    };
-
-    if(state.valueA != "" && state.valueB != "" && state.equalOperator){
-      falseAction = false;
-    };
-
-    if(state.valueA != "" && state.valueB != "" && !state.equalOperator && state.actionOperator != ""){
-      falseAction = false;
-    };
-
-    if(falseAction){
-      return;
-    };
-    /*END of checking action execution validity*/
-
-    /*executing operations*/
-    let digitA = parseFloat(state.valueA);
-    let digitB = parseFloat(state.valueB);
-    let finalAnswer;
-
-    if(state.negativeNumber) {
-      digitB *= -1;
-    }
-
-    switch(state.actionOperator){
-      case OPERATOR_ADD:
-        finalAnswer = digitA + digitB;
-        break;
-      case OPERATOR_SUBTRACT:
-        finalAnswer = digitA - digitB;
-        break;
-      case OPERATOR_DIVIDE:
-        finalAnswer = digitA / digitB;
-        break;
-      case OPERATOR_MULTIPLY:
-        finalAnswer = digitA * digitB;
-        break;
-      default:
-        console.log("WARNING: default case executed in actionExecution()");
-        break;
-    };
+    /*Setting first and second digit flags is done.*/
     
-    /*final state update*/
-    this.setState(
-      {
-        answer: finalAnswer,
-        valueA: finalAnswer,
-        valueB: "",
-        firstDigitEntered: true,
-        secondDigitEntered: false,
-        equalOperator: false,
-        negativeNumber: false,
-        actionOperator: ""
-      }
-    );
-  };
-
-  /*DISPLAY VALUES*/
-  displayValues(){
-    this.setState((state) => {
-      let firstNumber = state.valueA;
-      let secondNumber = state.valueB;
-      let actionOperator = state.actionOperator;
-      let history = "";
-      /*construct history value*/
-      history = firstNumber + actionOperator + secondNumber;
-
-      return {
-        displayCurrentValue: state.valueA,
-        history: history
-      };
-    });
+  console.log("state in actionSelector:"); /*DEBUG*/
+  console.log(this.state); /*DEBUG*/
+  
   };
 
   render() {
@@ -344,7 +212,6 @@ class Calculator extends React.Component {
     </div>
     )
   };
-
 };
 
 /*---------- DISPLAY COMPONENT  ----------*/
