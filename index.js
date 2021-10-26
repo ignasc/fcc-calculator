@@ -118,7 +118,7 @@ class Calculator extends React.Component {
     };
   };
 
-  /*SELECT OPERATOR*/
+  /*SELECT OPERATOR AND QUEUE ACTIONS*/
   actionSelector(actionID){
 
     /*clear calculator*/
@@ -179,10 +179,37 @@ class Calculator extends React.Component {
     };
 
     /*Setting first and second digit flags is done.*/
+
+  /*call action executor here*/
     
   console.log("state in actionSelector:"); /*DEBUG*/
   console.log(this.state); /*DEBUG*/
   
+  };
+
+  /*CHECK, VALIDATE AND EXECUTE QUEUED ACTIONS*/
+  actionExecute(){
+    console.log("actionExecute() called");
+
+    /*NOTE: this function could be action validator, that calls another function called actionExecute()*/
+
+    /*if digit/dot has been passed, check if it is valid to be appended*/
+	/*if not, break out of this function*/
+	/*if valid, update digit and break out*/
+
+    /*check if minus sign was pressed, there is already an operator assigned and second digit exists/entered*/
+	/*if true, then multiply second digit by -1 to change it's sign to opposite and break out*/
+
+    /*check if both digits are entered and operator assigned in state*/
+	/*if true, then execute the queued actions and do the following:
+	  assign the new operator immediately
+	  assign answer to first digit
+	  set firstDigitEntered to true
+	  break out*/
+
+    /*check if both digits are entered, operator assigned in state and equal sign was pressed*/
+	/*if true, then execute the queued actions and set the answer to first digit, rest set to initial state*/
+
   };
 
   render() {
