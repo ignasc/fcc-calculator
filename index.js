@@ -101,7 +101,7 @@ class Calculator extends React.Component {
   };
 
   updateDigit(digit){
-    let existingDigit = this.state.firstDigitEntered ? this.state.secondDigit : this.state.firstDigit;
+    let existingDigit = Math.abs(this.state.firstDigitEntered ? this.state.secondDigit : this.state.firstDigit);/*remove negative sign before operations, if it exists*/
     let newDigit;
     if(this.state.decimalPoint){/*add to integer or to decimal*/
       newDigit = existingDigit + digit * this.state.multiplier;
@@ -114,10 +114,22 @@ class Calculator extends React.Component {
       };
     });
     if(this.state.firstDigitEntered){
-      this.setState({secondDigit: newDigit});
+      this.setState({secondDigit: this.state.negativeSign ? newDigit * (-1) : newDigit});
     } else {
-      this.setState({firstDigit: newDigit});
+      this.setState({firstDigit: this.state.negativeSign ? newDigit * (-1) : newDigit});
     };
+  };
+
+  selectOperator(actionID){
+    console.log("selectOperator called " + actionID);
+    if(this.state.firstDigitEntered && this.state.operatorSelected != "" && actionID == OPERATOR_SUBTRACT){
+      this.setState((state)=>{return{
+        negativeSign: true,
+        secondDigit: state.secondDigit<0 ? state.secondDigit : state.secondDigit*(-1)/*sets second digit to negative if needed*/
+      }});
+      return;
+    };
+    this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false, operatorSelected: actionID});
   };
 
   actionSelector(actionID){
@@ -130,19 +142,19 @@ class Calculator extends React.Component {
     switch(actionID){
       case OPERATOR_DIVIDE:
         console.log("operator " + actionID);
-        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        this.selectOperator(actionID);
         break;
       case OPERATOR_MULTIPLY:
         console.log("operator " + actionID);
-        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        this.selectOperator(actionID);
         break;
       case OPERATOR_SUBTRACT:
         console.log("operator " + actionID);
-        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        this.selectOperator(actionID);
         break;
       case OPERATOR_ADD:
         console.log("operator " + actionID);
-        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        this.selectOperator(actionID);
         break;
       case OPERATOR_EQUALS:
         console.log("operator " + actionID);
