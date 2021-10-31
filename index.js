@@ -19,9 +19,11 @@ const OPERATOR_EQUALS = "equals";
 
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
-  firstDigit: "",
-  secondDigit: "",
-  digitToAppend: "",
+  firstDigit: 0,
+  secondDigit: null,
+  digitToAppend: null,
+  multiplier: 10,
+  decimalPoint: false,
 
   firstDigitEntered: false,
   secondDigitEntered: false,
@@ -88,129 +90,76 @@ class Calculator extends React.Component {
       case NUMBER_DECIMAL:
         return ".";
       default:
-        return number;
+        console.log("WARNING: default switch executed in converToNumber() function");
+        break;
     };
   };
 
   /*clear calculator*/
   clearCalc() {
     this.setState(INITIAL_STATE);
-  }
+  };
 
-  /*check if number format is correct with regex*/
-  checkNumber(currentNumber, pressedNumber) {
-    /*NOTE: these regex variables are made so that they will accept correct order in
-    which numbers are constructed, either 0.x or x.x, where x is any number.
-    So first will pass with 0 -> 0. -> 0.x, but will not accept 00. or 0x etc.
-    Second one will pass with any digit except 0 at start, followed by any numbers, dot and numbers again.
-    */
-    let zeroNumberRegex = /^0$|^0[.]$|^0[.]\d+$/; /*0.xxxxxx*/
-    let anyNumberRegex = /^[1-9]\d*$|^[1-9]\d*[.]?$|^[1-9]\d*[.]?\d+$/; /*any other number*/
-    let testNumber = "";
-
-    /*construct number with a pressed symbol for testing it, before approving*/
-    testNumber = currentNumber.concat(this.convertToNumber(pressedNumber));
-    /*check if the number passes regex tests and return true or false*/
-    if (zeroNumberRegex.test(testNumber)||anyNumberRegex.test(testNumber)) {
-      return true;
+  updateDigit(digit){
+    let existingDigit = this.state.firstDigitEntered ? this.state.secondDigit : this.state.firstDigit;
+    let newDigit;
+    if(this.state.decimalPoint){/*add to integer or to decimal*/
+      newDigit = existingDigit + digit * this.state.multiplier;
     } else {
-      return false;
+      newDigit = existingDigit * this.state.multiplier + digit;
+    };
+    this.setState((state)=>{
+      return{
+        multiplier: state.decimalPoint ? this.state.multiplier/10 : this.state.multiplier
+      };
+    });
+    if(this.state.firstDigitEntered){
+      this.setState({secondDigit: newDigit});
+    } else {
+      this.setState({firstDigit: newDigit});
     };
   };
 
-  /*SELECT OPERATOR AND QUEUE ACTIONS*/
   actionSelector(actionID){
 
-    /*clear calculator*/
-    if(actionID == OPERATOR_CLEAR) {
+    if(actionID == OPERATOR_CLEAR){
       this.clearCalc();
       return;
     };
-
+    
     switch(actionID){
-      case OPERATOR_ADD:
-
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-
-        this.setState({operatorSelected: actionID});
-        break;
-      case OPERATOR_SUBTRACT:
-        
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-
-        this.setState({operatorSelected: actionID});
-        break;
       case OPERATOR_DIVIDE:
-        
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-
-        this.setState({operatorSelected: actionID});
+        console.log("operator " + actionID);
+        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
         break;
       case OPERATOR_MULTIPLY:
-        
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-
-        this.setState({operatorSelected: actionID});
+        console.log("operator " + actionID);
+        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        break;
+      case OPERATOR_SUBTRACT:
+        console.log("operator " + actionID);
+        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
+        break;
+      case OPERATOR_ADD:
+        console.log("operator " + actionID);
+        this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false});
         break;
       case OPERATOR_EQUALS:
-        this.setState({operatorSelected: actionID});
+        console.log("operator " + actionID);
+        break;
+      case NUMBER_DECIMAL:
+        console.log("decimal point executed");
+        if(!this.state.decimalPoint){
+          this.setState({decimalPoint: true, multiplier: 0.1});
+        };
         break;
       default:
-        this.setState((state) => {
-          return {digitToAppend: state.digitToAppend.concat(actionID)}
-        });
+        this.updateDigit(this.convertToNumber(actionID));
         break;
     };
 
-    /*Setting first and second digit flags is done.*/
-
-  /*call action executor here*/
-    
-  console.log("state in actionSelector:"); /*DEBUG*/
-  console.log(this.state); /*DEBUG*/
-  
-  };
-
-  /*CHECK, VALIDATE AND EXECUTE QUEUED ACTIONS*/
-  actionExecute(){
-    console.log("actionExecute() called");
-
-    /*NOTE: this function could be action validator, that calls another function called actionExecute()*/
-
-    /*if digit/dot has been passed, check if it is valid to be appended*/
-	/*if not, break out of this function*/
-	/*if valid, update digit and break out*/
-
-    /*check if minus sign was pressed, there is already an operator assigned and second digit exists/entered*/
-	/*if true, then multiply second digit by -1 to change it's sign to opposite and break out*/
-
-    /*check if both digits are entered and operator assigned in state*/
-	/*if true, then execute the queued actions and do the following:
-	  assign the new operator immediately
-	  assign answer to first digit
-	  set firstDigitEntered to true
-	  break out*/
-
-    /*check if both digits are entered, operator assigned in state and equal sign was pressed*/
-	/*if true, then execute the queued actions and set the answer to first digit, rest set to initial state*/
-
-  };
+    console.log(this.state);
+  };  
 
   render() {
     return (
@@ -283,8 +232,7 @@ ReactDOM.render(
 
 
 
-
-/*OLD PROGRAM (BACKUP)*/
+/*OLD PROGRAM (BACKUP)*
 
 
   /*
@@ -309,14 +257,15 @@ const OPERATOR_EQUALS = "equals";
 
 /*app initial state as constant as it is used in clearing calculator*
 const INITIAL_STATE = {
-  displayValue: 0,
-  history: "-",
-  valueA: "",
-  valueB: "",
-  action: "",
-  answer: "",
+  firstDigit: "1",
+  secondDigit: "",
+  digitToAppend: "",
+
   firstDigitEntered: false,
-  negativeNumber: false
+  secondDigitEntered: false,
+  negativeSign: false,
+
+  operatorSelected: ""
 };
 
 /*---------- REACT  ----------*
@@ -386,61 +335,6 @@ class Calculator extends React.Component {
     this.setState(INITIAL_STATE);
   }
 
-  /*formating values for display and setting state*
-  setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber) {
-    this.setState((state) => {
-      let negativeSign = "";
-      let frontBracket = "";
-      let backBracket = "";
-      if(state.negativeNumber){
-        negativeSign = "-";
-        frontBracket = "("
-        backBracket = ")";
-      }
-      return {
-      history: firstValue + this.convertToNumber(operator) + frontBracket + negativeSign + secondValue + backBracket,
-      displayValue: state.answer != "" ? state.answer : firstDigitEntered ? negativeSign + secondValue : firstValue,
-      valueA: firstValue,
-      valueB: secondValue,
-      action: operator,
-      firstDigitEntered: firstDigitEntered,
-      }
-    });
-    
-  };
-
-  /*
-  Persidaryti programa:
-  - Regex, aprašantis skaičių(priekyje minusas arba nulis tik vienas, vienas taškas etc.)
-  - Pradinėje sąlygoje pirmas skaičius visada nulis
-  - Kai įvedamas operatorius, tada pradedamas vesti sekantis skaičius
-  - Antro skaičiaus pradinė vertė automatiškai yra pirmas skaičius po to, kai įvedamas operatorius,
-  tačiau, jei bus vedamas naujas skaičius - overwrite originalą. O kablelio ar minuso atveju nedaryti
-  overwrite.
-  - Kai įvedamas operatorius antro skaičiaus metu, automatiškai atliekamas prieš tai įvestas matematinis veiksmas,
-  ir gautas atsakymas automatiškai priskiriamas prie pirmo skaičiaus, plius įvedamas iš karto operatorius ir
-  tuomet vedamas antras skaičius.
-
-  Bonus points: skaičius su minuso ženklu automatiškai apskliaudžiamas.
-  PSEUDOKODAS:
-  Paspaudus betkurį mygtuką, tikrinama esama skaičiaus vertė su paspaustu simboliu per regex.
-    Jei regex tenkina, tuomet ta skaičiu priskiriame prie displayValue.
-    Jei netenkina - ignoruojam mygtuko paspaudimą ir atšaukiam visą likusią operaciją.
-  Paspaudus operatoriaus mygtuką:
-    Pirmiausia tikriname, ar jau yra įvestas pirmas skaičius, ar dar ne
-      Jei įvestas, pirmiausia patikriname, ar operatorius paspaustas "-", tokiu atveju antras skaičius padauginamas iš -1, kad pakeisto jo ženklą.
-      Tuomet pirmiausia atliekame operaciją su skaičiais, gautą atsakymą priskiriame prie pirmojo kintamojo ir prie action priskiriame operatorių, kurį paspaudėme antrąkart.
-      Jei pirmas skaičius nebuvo įvestas, tuomet esama displayValue vertė priskiriama prie valueA.
-      Atitinkamas operatorius priskiriamas prie action
-  
-      regex:
-      Pirmas simbolis gali būti belekoks skaičius.
-      Jei pirmas simbolis 0: antras simbolis tik taškas.
-      Jei pirmas simbolis kitas skaičius: toliau gali būti belekiek skaičių.
-      Skaičiuje gali egzistuoti tik vienas taškas.
-
-  */
-
   /*check if number format is correct with regex*
   checkNumber(currentNumber, pressedNumber) {
     /*NOTE: these regex variables are made so that they will accept correct order in
@@ -456,127 +350,142 @@ class Calculator extends React.Component {
     testNumber = currentNumber.concat(this.convertToNumber(pressedNumber));
     /*check if the number passes regex tests and return true or false*
     if (zeroNumberRegex.test(testNumber)||anyNumberRegex.test(testNumber)) {
-      console.log("Regex test passed");
       return true;
     } else {
-      console.log("Regex test failed");
       return false;
     };
   };
 
-  actionSelector(action) {
-    let firstValue;
-    let secondValue;
-    let operator;
-    let firstDigitEntered;
-    let negativeNumber;
+  /*SELECT OPERATOR AND QUEUE ACTIONS*
+  actionSelector(actionID){
 
     /*clear calculator*
-    if(action == OPERATOR_CLEAR) {
+    if(actionID == OPERATOR_CLEAR) {
       this.clearCalc();
       return;
     };
 
-    firstValue = this.state.valueA;
-    secondValue = this.state.valueB;
-    operator = this.state.action;
-    firstDigitEntered = this.state.firstDigitEntered;
-    negativeNumber = this.state.negativeNumber;
-    
-
-    switch(action){
+    switch(actionID){
       case OPERATOR_ADD:
-        operator = OPERATOR_ADD;
-        if(secondValue!=""){
-          this.actionExecution(operator, this.state.valueA, this.state.valueB, this.state.negativeNumber);
-          break;
+
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
         };
-        firstDigitEntered = true;
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_SUBTRACT:
-        if(firstDigitEntered){/* for making negative number *
-          this.setState({negativeNumber: true})
-          break;
-        }
-        operator = OPERATOR_SUBTRACT;
-        firstDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
+        };
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_DIVIDE:
-        operator = OPERATOR_DIVIDE;
-        firstDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
+        };
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_MULTIPLY:
-        operator = OPERATOR_MULTIPLY;
-        firstDigitEntered = true;
+        
+        if(this.state.firstDigitEntered){
+          this.setState({secondDigitEntered: true});
+        } else {
+          this.setState({firstDigitEntered: true});
+        };
+
+        this.setState({operatorSelected: actionID});
         break;
       case OPERATOR_EQUALS:
-        this.actionExecution(operator, this.state.valueA, this.state.valueB, this.state.negativeNumber);
+        this.setState({operatorSelected: actionID});
         break;
       default:
-        if(this.state.firstDigitEntered && this.checkNumber(secondValue, action)) {
-          secondValue = secondValue.concat(this.convertToNumber(action));
-        } else if (!this.state.firstDigitEntered && this.checkNumber(firstValue, action)) {
-          firstValue = firstValue.concat(this.convertToNumber(action));
-        };
+        this.setState((state) => {
+          return {digitToAppend: state.digitToAppend.concat(actionID)}
+        });
         break;
     };
 
+    /*Setting first and second digit flags is done.*
 
-    this.setDisplay(firstValue, secondValue, operator, firstDigitEntered, negativeNumber);
-
+  /*call action validator here*
+  this.actionValidate();
     
-    console.log(this.state);
+  console.log("state in actionSelector:"); /*DEBUG*
+  console.log(this.state); /*DEBUG*
+  
   };
 
-  actionExecution(action, valueA, valueB, negativeSign){
-    let digitA = parseFloat(valueA);
-    let digitB = parseFloat(valueB);
+  /*CHECK, VALIDATE AND EXECUTE QUEUED ACTIONS*
+  actionValidate(){
 
-    if(negativeSign) {
-      digitB *= -1;
-    }
+    let numberValid = this.checkNumber(this.state.firstDigit, this.convertToNumber(this.digitToAppend));
+    console.log(numberValid);
+    if(numberValid){
+      console.log("number was valid");
+      this.setState((state) => {
+        let newNumber;
+        newNumber = state.firstDigit.concat(state.digitToAppend);
+        return {firstDigit: newNumber};
+      });
+    };
+    console.log("actionValidate() called");
 
-    switch(action){
-      case OPERATOR_ADD:
-        this.setState({answer: digitA + digitB});
-        break;
-      case OPERATOR_SUBTRACT:
-        this.setState({answer: digitA - digitB});
-        break;
-      case OPERATOR_DIVIDE:
-        this.setState({answer: digitA / digitB});
-        break;
-      case OPERATOR_MULTIPLY:
-        this.setState({answer: digitA * digitB});
-        break;
-      default:
-        console.log("WARNING: default case executed in actionExecution()");
-        break;
+    /*NOTE: this function could be action validator, that calls another function called actionExecute()*
+
+    /*if digit/dot has been passed, check if it is valid to be appended*
+	/*if not, break out of this function*
+	/*if valid, update digit and break out*
+  if(this.digitToAppend == NUMBER_ZERO ||
+    this.digitToAppend == NUMBER_ONE ||
+    this.digitToAppend == NUMBER_TWO ||
+    this.digitToAppend == NUMBER_THREE ||
+    this.digitToAppend == NUMBER_FOUR ||
+    this.digitToAppend == NUMBER_FIVE ||
+    this.digitToAppend == NUMBER_SIX ||
+    this.digitToAppend == NUMBER_SEVEN ||
+    this.digitToAppend == NUMBER_EIGHT ||
+    this.digitToAppend == NUMBER_NINE ||
+    this.digitToAppend == NUMBER_DECIMAL) {
+
     };
 
-    /*after operation with digits is performed, clear calculator and asign answer to the first digit*/
-    /*this function can be optimised, no need to have separate answer variable in state *
-    
-    this.setState((state) => {
-      let answer = state.answer;
-      console.log("before update:");
-      console.log(state);
-      return {
-        displayValue: answer,
-        valueA: answer,
-        valueB: "",
-        action: "",
-        firstDigitEntered: false,
-        TESTAS: "TESTAS"
-      };
-    });
+    /*check if minus sign was pressed, there is already an operator assigned and second digit exists/entered*
+	/*if true, then multiply second digit by -1 to change it's sign to opposite and break out*
+
+    /*check if both digits are entered and operator assigned in state*
+	/*if true, then execute the queued actions and do the following:
+	  assign the new operator immediately
+	  assign answer to first digit
+	  set firstDigitEntered to true
+	  break out*
+
+    /*check if both digits are entered, operator assigned in state and equal sign was pressed*
+	/*if true, then execute the queued actions and set the answer to first digit, rest set to initial state*
+
+  /*if an action is valid, execute it*
+  this.actionExecute;
+
+  };
+
+  actionExecute(){
 
   };
 
   render() {
     return (
     <div id="calculator">
-      <Display displayValue={this.state.displayValue} displayHistory={this.state.history}/>
+      <Display displayValue={this.state.displayCurrentValue} displayHistory={this.state.history}/>
       <div id="keypad">
         <Button id={OPERATOR_CLEAR} display="AC" action={this.actionSelector}/>
         <Button id={OPERATOR_DIVIDE} display="/" action={this.actionSelector}/>
@@ -600,7 +509,6 @@ class Calculator extends React.Component {
     </div>
     )
   };
-
 };
 
 /*---------- DISPLAY COMPONENT  ----------*
@@ -641,5 +549,4 @@ class Button extends React.Component {
 /*---------------------------------*
 ReactDOM.render(
     <ManoApp />
-  , document.getElementById('root'));
-  */
+  , document.getElementById('root'));*/
