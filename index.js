@@ -24,13 +24,16 @@ const INITIAL_STATE = {
   digitToAppend: null,
   multiplier: 10,
   decimalPoint: false,
+  finalAnswer: null,
 
   firstDigitEntered: false,
   secondDigitEntered: false,
   negativeSign: false,
 
   operatorSelected: "",
-  nextOperatorSelected: ""
+
+  displayCurrentValue: 0,
+  history: ""
 };
 
 /*---------- REACT  ----------*/
@@ -92,7 +95,7 @@ class Calculator extends React.Component {
         return ".";
       default:
         console.log("WARNING: default switch executed in converToNumber() function");
-        break;
+        return "";
     };
   };
 
@@ -123,7 +126,7 @@ class Calculator extends React.Component {
 
   selectOperator(actionID){
     let currentOperator = actionID;
-    console.log("selectOperator called " + actionID);
+
     if(this.state.firstDigitEntered && this.state.operatorSelected != "" && actionID == OPERATOR_SUBTRACT){
       this.setState((state)=>{return{
         negativeSign: true,
@@ -132,22 +135,56 @@ class Calculator extends React.Component {
       return;
     };
 
-    /*check if another operator is pressed after second digit entered*/
-    if(this.state.secondDigit != "" && this.state.operatorSelected != ""){
-        console.log("operator pressed after second digit entered");
-	/*
-	Execute operation with current operator (create new function for executing operations).
-	Assign the answer to the first digit, flag first digit as entered, reset other flags in state
-	Assign newest operator to state.operatorSelected
-	*/
-    };
+    
+    if(this.state.secondDigit != "" && this.state.operatorSelected != "" && this.state.operatorSelected != OPERATOR_SUBTRACT){
+      console.log("operator pressed after second digit entered");
 
-    if(this.state.firstDigit != "" && this.state.secondDigit != "" && this.state.operatorSelected = OPERATOR_EQUALS)
-    {
-	console.log("Equal operator pressed, execute action");
+      if(this.state.operatorSelected != "" && this.state.operatorSelected != currentOperator && this.state.operatorSelected != OPERATOR_EQUALS){
+        
+        console.log("execute executeOperation() twice");
+        this.executeOperation();
+        this.setState({
+          operatorSelected: currentOperator
+        });
+      };
+
+      this.executeOperation();
+
+      /*
+      Ok, daugmaž kaip ir veikia, bet dar su bugais. Peržiūrėti visą algoritmą, kuomet atliekami veiksmai paspaudus lygybę ir paspaudus sekantį operatorių.
+      */
     };
 
     this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false, operatorSelected: actionID});
+  };
+
+  executeOperation(){
+    console.log("execute operation:");
+    console.log("operation: " + this.state.firstDigit + this.state.operatorSelected + this.state.secondDigit + "answer:");
+    let answer;
+
+    switch(this.state.operatorSelected){
+      case OPERATOR_DIVIDE:
+        answer = this.state.firstDigit / this.state.secondDigit;
+        break;
+      case OPERATOR_MULTIPLY:
+        answer = this.state.firstDigit * this.state.secondDigit;
+        break;
+      case OPERATOR_SUBTRACT:
+        answer = this.state.firstDigit - this.state.secondDigit;
+        break;
+      case OPERATOR_ADD:
+        answer = this.state.firstDigit + this.state.secondDigit;
+        break;
+      case OPERATOR_EQUALS:
+        console.log("WARNING: equals switch reached in executeOperation()");
+        break;
+    };
+    this.setState(INITIAL_STATE);
+    this.setState({
+      firstDigit: answer
+    });
+    
   };
 
   actionSelector(actionID){
@@ -159,23 +196,19 @@ class Calculator extends React.Component {
     
     switch(actionID){
       case OPERATOR_DIVIDE:
-        console.log("operator " + actionID);
         this.selectOperator(actionID);
         break;
       case OPERATOR_MULTIPLY:
-        console.log("operator " + actionID);
         this.selectOperator(actionID);
         break;
       case OPERATOR_SUBTRACT:
-        console.log("operator " + actionID);
         this.selectOperator(actionID);
         break;
       case OPERATOR_ADD:
-        console.log("operator " + actionID);
         this.selectOperator(actionID);
         break;
       case OPERATOR_EQUALS:
-        console.log("operator " + actionID);
+        this.selectOperator(actionID);
         break;
       case NUMBER_DECIMAL:
         console.log("decimal point executed");
@@ -189,7 +222,19 @@ class Calculator extends React.Component {
     };
 
     console.log(this.state);
-  };  
+    this.updateDisplay();
+  };
+
+  updateDisplay(){
+    this.setState((state)=>{
+      let history = "";
+      history = state.firstDigit + this.convertToNumber(state.operatorSelected) + state.secondDigit;
+      return{
+        history: history,
+        displayCurrentValue: state.firstDigit
+      };
+    });
+  };
 
   render() {
     return (
