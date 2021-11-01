@@ -29,7 +29,8 @@ const INITIAL_STATE = {
   secondDigitEntered: false,
   negativeSign: false,
 
-  operatorSelected: ""
+  operatorSelected: "",
+  nextOperatorSelected: ""
 };
 
 /*---------- REACT  ----------*/
@@ -108,12 +109,12 @@ class Calculator extends React.Component {
     } else {
       newDigit = existingDigit * this.state.multiplier + digit;
     };
-    this.setState((state)=>{
+    this.setState((state)=>{/*adjust multiplier if we're adding decimal places*/
       return{
         multiplier: state.decimalPoint ? this.state.multiplier/10 : this.state.multiplier
       };
     });
-    if(this.state.firstDigitEntered){
+    if(this.state.firstDigitEntered){/*save newly created digit to appropriate location*/
       this.setState({secondDigit: this.state.negativeSign ? newDigit * (-1) : newDigit});
     } else {
       this.setState({firstDigit: this.state.negativeSign ? newDigit * (-1) : newDigit});
@@ -121,6 +122,7 @@ class Calculator extends React.Component {
   };
 
   selectOperator(actionID){
+    let currentOperator = actionID;
     console.log("selectOperator called " + actionID);
     if(this.state.firstDigitEntered && this.state.operatorSelected != "" && actionID == OPERATOR_SUBTRACT){
       this.setState((state)=>{return{
@@ -129,6 +131,22 @@ class Calculator extends React.Component {
       }});
       return;
     };
+
+    /*check if another operator is pressed after second digit entered*/
+    if(this.state.secondDigit != "" && this.state.operatorSelected != ""){
+        console.log("operator pressed after second digit entered");
+	/*
+	Execute operation with current operator (create new function for executing operations).
+	Assign the answer to the first digit, flag first digit as entered, reset other flags in state
+	Assign newest operator to state.operatorSelected
+	*/
+    };
+
+    if(this.state.firstDigit != "" && this.state.secondDigit != "" && this.state.operatorSelected = OPERATOR_EQUALS)
+    {
+	console.log("Equal operator pressed, execute action");
+    };
+
     this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false, operatorSelected: actionID});
   };
 
