@@ -94,7 +94,7 @@ class Calculator extends React.Component {
       case NUMBER_DECIMAL:
         return ".";
       default:
-        console.log("WARNING: default switch executed in converToNumber() function");
+        console.log("WARNING: default switch executed in converToNumber() function with variable: " + number);
         return "";
     };
   };
@@ -105,6 +105,16 @@ class Calculator extends React.Component {
   };
 
   updateDigit(digit){
+
+    /*strict special case when this function takes a negative sign as parameter*/
+    if(digit == OPERATOR_SUBTRACT){
+      this.setState((state)=>{return{
+        negativeSign: true,
+        secondDigit: state.secondDigit<0 ? state.secondDigit : state.secondDigit*(-1)/*sets second digit to negative if needed*/
+      }});
+      return;/*important to break out of the function as parameter is not a digit*/
+    };
+
     let existingDigit = Math.abs(this.state.firstDigitEntered ? this.state.secondDigit : this.state.firstDigit);/*remove negative sign before operations, if it exists*/
     let newDigit;
     if(this.state.decimalPoint){/*add to integer or to decimal*/
@@ -127,39 +137,28 @@ class Calculator extends React.Component {
   selectOperator(actionID){
     let currentOperator = actionID;
 
+    /*set second digit to NEGATIVE*/
     if(this.state.firstDigitEntered && this.state.operatorSelected != "" && actionID == OPERATOR_SUBTRACT){
-      this.setState((state)=>{return{
-        negativeSign: true,
-        secondDigit: state.secondDigit<0 ? state.secondDigit : state.secondDigit*(-1)/*sets second digit to negative if needed*/
-      }});
+      this.updateDigit(actionID);/*pass special case with negative sign*/
       return;
     };
 
-    
-    if(this.state.secondDigit != "" && this.state.operatorSelected != "" && this.state.operatorSelected != OPERATOR_SUBTRACT){
-      console.log("operator pressed after second digit entered");
+    /*any other operator is pressed while second digit is not entered*/
 
-      if(this.state.operatorSelected != "" && this.state.operatorSelected != currentOperator && this.state.operatorSelected != OPERATOR_EQUALS){
-        
-        console.log("execute executeOperation() twice");
-        this.executeOperation();
-        this.setState({
-          operatorSelected: currentOperator
-        });
-      };
-
+    /*EQUAL operator is pressed*/
+    if(this.state.firstDigitEntered && this.state.secondDigitEntered && this.state.operatorSelected != "" && actionID == OPERATOR_EQUALS){
       this.executeOperation();
-
-      /*
-      Ok, daugmaž kaip ir veikia, bet dar su bugais. Peržiūrėti visą algoritmą, kuomet atliekami veiksmai paspaudus lygybę ir paspaudus sekantį operatorių.
-      */
+      return;
     };
 
-    this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false, operatorSelected: actionID});
+    /*when another OPERATOR is pressed immediately after second digit*/
+
+    /*flag first digit as entered and reset multiplier and decimal point*/
+    this.setState({firstDigitEntered: true, multiplier: 10, decimalPoint: false, operatorSelected: actionID==OPERATOR_EQUALS?"":actionID});
   };
 
   executeOperation(){
-    console.log("execute operation:");
+    console.log("executeOperation() called:");
     console.log("operation: " + this.state.firstDigit + this.state.operatorSelected + this.state.secondDigit + "answer:");
     let answer;
 
