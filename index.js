@@ -104,14 +104,20 @@ class Calculator extends React.Component {
     this.setState(INITIAL_STATE);
   };
 
+  /*set digit to negative number*/
+  negativeSign(){
+    this.setState((state)=>{return{
+    negativeSign: true,
+    secondDigit: state.secondDigit<0 ? state.secondDigit : state.secondDigit*(-1)/*sets second digit to negative if not already set*/
+    }});
+    
+  };
+
   updateDigit(digit){
 
     /*strict special case when this function takes a negative sign as parameter*/
     if(digit == OPERATOR_SUBTRACT){
-      this.setState((state)=>{return{
-        negativeSign: true,
-        secondDigit: state.secondDigit<0 ? state.secondDigit : state.secondDigit*(-1)/*sets second digit to negative if needed*/
-      }});
+      this.negativeSign();
       return;/*important to break out of the function as parameter is not a digit*/
     };
 
