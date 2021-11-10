@@ -23,6 +23,7 @@ const INITIAL_STATE = {
   secondDigit: null,
   digitToAppend: null,
   decimalPoint: false,
+  digitMultiplier: 10
   finalAnswer: null,
   firstDigitEntered: false,
   secondDigitEntered: false,
@@ -134,28 +135,80 @@ class Calculator extends React.Component {
 
   /*set digit to negative number*/
   negativeSign(){
+    /*only call this setState once as all consiqutive sign handling is done in updateDigit()*/
+    if(this.state.negativeSign){
+      return;
+    }else{
+      this.setState((state)=>{
+	return{
+	  negativeSign: true,
+	  secondDigit: secondDigit == "" ? state.secondDigit : state.secondDigit * (-1)
+	};
+      });
+    };
+    
   };
 
   /*update digit with new pressed number*/
   updateDigit(digit){
+
+    /*check if decimal point was pressed*/
+    if(digit == NUMBER_DECIMAL){
+      /*check if it is already initialised to avoid reseting multiplier*/
+      if(this.state.decimalPoint){
+        return;
+      } else {
+        this.setState({
+          decimalPoint: true,
+          digitMultiplier: 0.1
+        });
+        return;
+      };
+    };
+
+    let currentDigit = this.state.firstDigitEntered ? Math.abs(this.state.secondDigit) : Math.abs(this.state.firstDigit);
+    let negativeSign = this.state.negativeSign ? true : false;
+
     /*check if first digit is already entered*/
     if(this.state.firstDigitEntered){
+
       console.log("update second digit with " + digit);
-      return;
+      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.numberMultiplier : currentDigit*10 + digit;
+
+      /*set multiplier to next number if it is decimal point*/
+	if(this.state.decimalPoint){
+	  this.setState((state)=>{
+	    return {decimalPoint: state.decimalPoint * 0.1};
+	  });
+	};
+
     } else {
       console.log("update first digit with " + digit);
-      this.validateDigit(this.state.firstDigit, digit);
     };
+
+    /*update state with a new number*/
+      if(this.state.firstDigitEntered){
+	this.setState({secondDigit: negativeSign ? currentDigit * (-1) : currentDigit});
+      }
+      else {
+	this.setState({firstDigit: negativeSign ? currentDigit * (-1) : currentDigit});
+      };
   };
 
-  /*check is the new number would be valid*/
+  /*check if the new number would be valid*/
   validateDigit(currentNumber, digitToAppend){
     console.log("Check to append " + digitToAppend + " to number " + currentNumber);
+
   };
 
   /*check if decimal point is needed*/
   decimalPoint(){
     console.log("decimalPoint() called");
+    if(this.state.decimalPoint){
+      return true;
+    } else {
+      return false;
+    };
   };
 
   updateOperator(actionID){
