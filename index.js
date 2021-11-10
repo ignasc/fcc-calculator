@@ -23,7 +23,7 @@ const INITIAL_STATE = {
   secondDigit: null,
   digitToAppend: null,
   decimalPoint: false,
-  digitMultiplier: 10
+  digitMultiplier: 10,
   finalAnswer: null,
   firstDigitEntered: false,
   secondDigitEntered: false,
@@ -116,9 +116,7 @@ class Calculator extends React.Component {
         this.updateOperator(actionID);
         break;
       case NUMBER_DECIMAL:
-        if(!this.state.decimalPoint){
-          this.setState({decimalPoint: true});
-        };
+        this.updateDigit(actionID);
         break;
       default:
         this.updateDigit(this.convertToNumber(actionID));
@@ -162,8 +160,8 @@ class Calculator extends React.Component {
           decimalPoint: true,
           digitMultiplier: 0.1
         });
-        return;
       };
+      return;
     };
 
     let currentDigit = this.state.firstDigitEntered ? Math.abs(this.state.secondDigit) : Math.abs(this.state.firstDigit);
@@ -173,17 +171,25 @@ class Calculator extends React.Component {
     if(this.state.firstDigitEntered){
 
       console.log("update second digit with " + digit);
-      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.numberMultiplier : currentDigit*10 + digit;
+      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
 
       /*set multiplier to next number if it is decimal point*/
-	if(this.state.decimalPoint){
-	  this.setState((state)=>{
-	    return {decimalPoint: state.decimalPoint * 0.1};
-	  });
-	};
+      if(this.state.decimalPoint){
+        this.setState((state)=>{
+          return {digitMultiplier: state.digitMultiplier * 0.1};
+        });
+      };
 
     } else {
       console.log("update first digit with " + digit);
+      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
+
+      /*set multiplier to next number if it is decimal point*/
+      if(this.state.decimalPoint){
+        this.setState((state)=>{
+          return {digitMultiplier: state.digitMultiplier * 0.1};
+        });
+      };
     };
 
     /*update state with a new number*/
