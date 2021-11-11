@@ -162,8 +162,10 @@ class Calculator extends React.Component {
         });
       };
       return;
+      /*and finish updateDigit() call, no need to do anything else*/
     };
 
+    /*Math.abs is used to remove negative sign if it is present*/
     let currentDigit = this.state.firstDigitEntered ? Math.abs(this.state.secondDigit) : Math.abs(this.state.firstDigit);
     let negativeSign = this.state.negativeSign ? true : false;
 
@@ -173,7 +175,7 @@ class Calculator extends React.Component {
       console.log("update second digit with " + digit);
       currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
 
-      /*set multiplier to next number if it is decimal point*/
+      /*set multiplier to next decimal place if decimalPoint flag is true*/
       if(this.state.decimalPoint){
         this.setState((state)=>{
           return {digitMultiplier: state.digitMultiplier * 0.1};
@@ -218,7 +220,15 @@ class Calculator extends React.Component {
   };
 
   updateOperator(actionID){
+    /*debug check*/
+    if(actionID == OPERATOR_EQUALS){console.log("EQUAL passed to updateOperator() function");return;};
+
     let currentOperator = actionID;
+    this.setState((state)=>{
+	return{operatorSelected: state.operatorSelected.concat(this.convertNumber(actionID))};
+      }, ()=>{console.log("Operator check: " + this.state.operatorSelected)};
+
+    );
   };
 
   executeOperation(){
