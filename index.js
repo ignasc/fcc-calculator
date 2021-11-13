@@ -20,7 +20,7 @@ const OPERATOR_EQUALS = "equals";
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
   firstDigit: 0,
-  secondDigit: null,
+  secondDigit: "",
   digitToAppend: null,
   decimalPoint: false,
   digitMultiplier: 10,
@@ -88,10 +88,11 @@ class Calculator extends React.Component {
         return ".";
       default:
         console.log("WARNING: default switch executed in converToNumber() function with variable: " + number);
-        return "";
+        return number;
     };
   };
 
+  /*MAIN FUNCTION TRIGGER BY BUTTONS*/
   actionSelector(actionID){
 
     if(actionID == OPERATOR_CLEAR){
@@ -133,14 +134,14 @@ class Calculator extends React.Component {
 
   /*set digit to negative number*/
   negativeSign(){
-    /*only call this setState once as all consiqutive sign handling is done in updateDigit()*/
+    /*only call this setState once as all consequtive sign handling is done in updateDigit()*/
     if(this.state.negativeSign){
       return;
     }else{
       this.setState((state)=>{
 	return{
 	  negativeSign: true,
-	  secondDigit: secondDigit == "" ? state.secondDigit : state.secondDigit * (-1)
+	  secondDigit: state.secondDigit * (-1)
 	};
       });
     };
@@ -220,15 +221,43 @@ class Calculator extends React.Component {
   };
 
   updateOperator(actionID){
-    /*debug check*/
-    if(actionID == OPERATOR_EQUALS){console.log("EQUAL passed to updateOperator() function");return;};
 
-    let currentOperator = actionID;
+    /*check for negative sign for second digit*/
+    let negativeRegex = new RegExp('^[-/*+]\-$');
+    if(this.state.firstDigitEntered && this.state.operatorSelected != "" && negativeRegex.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
+      console.log("convert to negative number");
+      this.negativeSign();
+    };
+    /*if more than two operators, remove negative sign from second digit*/
+    let notNegativeRegex = new RegExp('^[-/*+]{2,}\-$');
+    if(this.state.firstDigitEntered && notNegativeRegex.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
+      console.log("convert back to positive number");
+      this.setState({negativeSign: false});
+    };
+
+    /*execute actions if conditions are met*/
+    let operatorRegex = new RegExp('^[-/*+=]$');
+    if(this.state.firstDigitEntered && this.state.secondDigit != "" && operatorRegex.test(this.convertToNumber(actionID))){
+      console.log("updateDigit() attempted to execute current actions");
+      return;
+    };
+
+    /*to prevent adding equal to operators*/
+    if(actionID == OPERATOR_EQUALS){console.log("updateOperator() called with EQUAL parameter");return;};
+
+    /*first digit entered (set it only once)*/
+    if(!this.state.firstDigitEntered){
+      this.setState({
+        firstDigitEntered: true,
+        decimalPoint: false,
+        digitMultiplier: 10
+      });
+    };
+
     this.setState((state)=>{
-	return{operatorSelected: state.operatorSelected.concat(this.convertNumber(actionID))};
-      }, ()=>{console.log("Operator check: " + this.state.operatorSelected)};
-
-    );
+      return{operatorSelected: state.operatorSelected.concat(this.convertToNumber(actionID))};
+      }, ()=>{console.log("Operator check: " + this.state.operatorSelected)
+    });
   };
 
   executeOperation(){
