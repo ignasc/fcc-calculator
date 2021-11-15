@@ -123,7 +123,8 @@ class Calculator extends React.Component {
         this.updateDigit(this.convertToNumber(actionID));
         break;
     };
-    console.log(this.state);
+    /*DEBUG: console.log in a setState callback to force state update before outputing into console*/
+    this.setState({},()=>{console.log(this.state)});
     this.updateDisplay();
   };
 
@@ -195,13 +196,13 @@ class Calculator extends React.Component {
       };
     };
 
-    /*update state with a new number*/
-      if(this.state.firstDigitEntered){
-	this.setState({secondDigit: negativeSign ? currentDigit * (-1) : currentDigit});
-      }
-      else {
-	this.setState({firstDigit: negativeSign ? currentDigit * (-1) : currentDigit});
-      };
+    /*update state with a new number (also check if negative sign is needed)*/
+    if(this.state.firstDigitEntered){
+      this.setState({secondDigit: negativeSign ? currentDigit * (-1) : currentDigit});
+    }
+    else {
+      this.setState({firstDigit: negativeSign ? currentDigit * (-1) : currentDigit});
+    };
   };
 
   /*check if the new number would be valid*/
