@@ -239,7 +239,7 @@ class Calculator extends React.Component {
     /*execute actions if conditions are met*/
     let operatorRegex = new RegExp('^[-/*+=]$');
     if(this.state.firstDigitEntered && this.state.secondDigit != "" && operatorRegex.test(this.convertToNumber(actionID))){
-      console.log("updateDigit() attempted to execute current actions");
+      this.executeOperation(actionID);
       return;
     };
 
@@ -261,29 +261,64 @@ class Calculator extends React.Component {
     });
   };
 
-  executeOperation(){
+  executeOperation(actionID){
     let answer;
-    switch(this.state.operatorSelected){
-      case OPERATOR_DIVIDE:
+    let operator = this.state.operatorSelected;
+    let newOperator = "";
+
+    let oneOrTwo = new RegExp("^[/*+-]|^[/*+-]{2}$");/*no more than two operators entered*/
+    let moreThanTwo = new RegExp("^[/*+-]{3,}$");/*more than two operators entered*/
+
+    /*DEBUG*/
+    console.log("updateDigit() executed with the following settings:");
+    console.log("First Digit: " + this.state.firstDigit);
+    console.log("Second Digit: " + this.state.secondDigit);
+    console.log("Operator: " + this.state.operatorSelected);
+    console.log("New operator: " + actionID);
+
+    /*filter out correct operator*/
+    if(oneOrTwo.test(operator)){
+      console.log("Two operators and select first one: " + operator[0]);
+      operator = operator[0];
+    } else if(moreThanTwo.test(operator)){
+      console.log("More than two operators, select last one: " + operator[operator.length-1]);
+      operator = operator[operator.length-1];
+    } else{
+      console.log("WARNING: executeOperation() called with unknown operator: " + operator);
+    };
+
+
+    switch(operator){
+      case "/":
         answer = this.state.firstDigit / this.state.secondDigit;
         break;
-      case OPERATOR_MULTIPLY:
+      case "*":
         answer = this.state.firstDigit * this.state.secondDigit;
         break;
-      case OPERATOR_SUBTRACT:
+      case "-":
         answer = this.state.firstDigit - this.state.secondDigit;
         break;
-      case OPERATOR_ADD:
+      case "+":
         answer = this.state.firstDigit + this.state.secondDigit;
         break;
-      case OPERATOR_EQUALS:
+      case "=":
         console.log("WARNING: equals switch reached in executeOperation()");
         break;
     };
+    console.log("updateDigit() executed: " + this.state.firstDigit + " " + actionID + " " + this.state.secondDigit + " and the answer is " + answer);
+
+    
     this.setState(INITIAL_STATE);
     this.setState({
-      firstDigit: answer
-    });
+      firstDigit: answer,
+      firstDigitEntered: true
+    }, ()=>{console.log(this.state)});
+
+    if(actionID != OPERATOR_EQUALS){
+       this.setState({
+         operatorSelected: this.convertToNumber(actionID)
+       }, ()=>{console.log("New operator set to: " + this.state.operatorSelected)});
+    };
   };
 
   updateDisplay(){
