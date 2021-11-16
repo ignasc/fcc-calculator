@@ -17,6 +17,12 @@ const OPERATOR_SUBTRACT = "subtract";
 const OPERATOR_ADD = "add";
 const OPERATOR_EQUALS = "equals";
 
+const NEGATIVE_REGEX = new RegExp('^[-/*+]\-$');/*two operators, second is minus sign*/
+const NOT_NEGATIVE_REGEX = new RegExp('^[-/*+]{2,}\-$');/*more than two any kind of operators*/
+const OPERATOR_REGEX = new RegExp('^[-/*+=]$');/*any single operator*/
+const ONE_OR_TWO_REGEX = new RegExp("^[/*+-]|^[/*+-]{2}$");/*no more than two operators entered*/
+const MORE_THAN_TWO_REGEX = new RegExp("^[/*+-]{3,}$");/*more than two operators entered*/
+
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
   firstDigit: 0,
@@ -125,7 +131,7 @@ class Calculator extends React.Component {
     };
     /*DEBUG: console.log in a setState callback to force state update before outputing into console*/
     this.setState({},()=>{console.log(this.state)});
-    this.updateDisplay();
+    this.updateDisplay(actionID);
   };
 
   /*clear calculator*/
@@ -224,21 +230,21 @@ class Calculator extends React.Component {
   updateOperator(actionID){
 
     /*check for negative sign for second digit*/
-    let negativeRegex = new RegExp('^[-/*+]\-$');
-    if(this.state.firstDigitEntered && this.state.operatorSelected != "" && negativeRegex.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
+    let NEGATIVE_REGEX = new RegExp('^[-/*+]\-$');
+    if(this.state.firstDigitEntered && this.state.operatorSelected != "" && NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
       console.log("convert to negative number");
       this.negativeSign();
     };
     /*if more than two operators, remove negative sign from second digit*/
-    let notNegativeRegex = new RegExp('^[-/*+]{2,}\-$');
-    if(this.state.firstDigitEntered && notNegativeRegex.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
+    let NOT_NEGATIVE_REGEX = new RegExp('^[-/*+]{2,}\-$');
+    if(this.state.firstDigitEntered && NOT_NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
       console.log("convert back to positive number");
       this.setState({negativeSign: false});
     };
 
     /*execute actions if conditions are met*/
-    let operatorRegex = new RegExp('^[-/*+=]$');
-    if(this.state.firstDigitEntered && this.state.secondDigit != "" && operatorRegex.test(this.convertToNumber(actionID))){
+    let OPERATOR_REGEX = new RegExp('^[-/*+=]$');
+    if(this.state.firstDigitEntered && this.state.secondDigit != "" && OPERATOR_REGEX.test(this.convertToNumber(actionID))){
       this.executeOperation(actionID);
       return;
     };
@@ -266,8 +272,8 @@ class Calculator extends React.Component {
     let operator = this.state.operatorSelected;
     let newOperator = "";
 
-    let oneOrTwo = new RegExp("^[/*+-]|^[/*+-]{2}$");/*no more than two operators entered*/
-    let moreThanTwo = new RegExp("^[/*+-]{3,}$");/*more than two operators entered*/
+    let ONE_OR_TWO_REGEX = new RegExp("^[/*+-]|^[/*+-]{2}$");/*no more than two operators entered*/
+    let MORE_THAN_TWO_REGEX = new RegExp("^[/*+-]{3,}$");/*more than two operators entered*/
 
     /*DEBUG*/
     console.log("updateDigit() executed with the following settings:");
@@ -277,10 +283,10 @@ class Calculator extends React.Component {
     console.log("New operator: " + actionID);
 
     /*filter out correct operator*/
-    if(oneOrTwo.test(operator)){
+    if(ONE_OR_TWO_REGEX.test(operator)){
       console.log("Two operators and select first one: " + operator[0]);
       operator = operator[0];
-    } else if(moreThanTwo.test(operator)){
+    } else if(MORE_THAN_TWO_REGEX.test(operator)){
       console.log("More than two operators, select last one: " + operator[operator.length-1]);
       operator = operator[operator.length-1];
     } else{
@@ -321,7 +327,82 @@ class Calculator extends React.Component {
     };
   };
 
-  updateDisplay(){
+  updateDisplay(actionID){
+  /*Available parameters to use:
+
+  firstDigit: 0,
+  secondDigit: "",
+  digitToAppend: null,
+  decimalPoint: false,
+  digitMultiplier: 10,
+  finalAnswer: null,
+  firstDigitEntered: false,
+  secondDigitEntered: false,
+  negativeSign: false,
+  operatorSelected: "",
+  displayCurrentValue: 0,
+  history: ""
+
+  */
+
+  let firstDisplayDigit = this.formatForDisplay(this.state.firstDigit,1);
+  let secondDisplayDigit = this.formatForDisplay(this.state.secondDigit,2);
+  let operatorDisplay = this.formatForDisplay(this.state.operatorSelected,3);
+
+  console.log("Formated display: " firstDisplayDigit + operatorDisplay + secondDisplayDigit);
+
+  /*If equal is pressed, clear the history, otherwise keep adding to it.*/
+  };
+
+  formatForDisplay(digit, selector){/*Selector: 1-first digit, 2-second digit, 3-operator*/
+
+  let formatedDigit = "";
+  let formatedOperator = "";
+  let minusSign = "-";
+  let singleDigitRegex = new RegExp('^\d$');
+
+    switch(selector){
+      case 1:
+      case 2:
+
+        /*if not entered, skip*/
+        if(digit == ""){
+          return "";
+        };
+
+        digit = Math.abs(digit);
+        formatedDigit = digit;
+
+        /*single round digit with decimalPoint activated - add .0 at the end*/
+        if(singleDigitRegex.test(digit) && this.state.decimalPoint){
+          formatedDigit = digit.concat(".0");
+        } else{
+          formatedDigit = digit;
+        };
+
+        /*check if negative sign is needed*/
+        if(this.state.negativeSign && this.state.firstDigitEntered){
+          formatedDigit = minusSign.concat(formatedDigit);
+        };
+
+        return formatedDigit;
+
+      break;
+      case 3:
+	console.log("formatForDisplay() called to format operator");
+	if(ONE_OR_TWO_REGEX.test(digit)){
+	  formatedOperator = digit[0];
+	} else if(MORE_THAN_TWO_REGEX.test(operator)){
+	  formatedOperator = digit[digit.length-1];
+	} else {formatedOperator = digit};
+
+	return formatedOperator;
+
+      break;
+      default:
+	console.log("WARNING: formatForDisplay() reached default switch state with " + selector);
+      break;
+    };
   };
 
   render() {
@@ -385,274 +466,3 @@ class Button extends React.Component {
 ReactDOM.render(
     <ManoApp />
   , document.getElementById('root'));
-
-
-/*OLD PROGRAM (BACKUP)*
-  /*
-const NUMBER_ZERO = "zero";
-const NUMBER_ONE = "one";
-const NUMBER_TWO = "two";
-const NUMBER_THREE = "three";
-const NUMBER_FOUR = "four";
-const NUMBER_FIVE = "five";
-const NUMBER_SIX = "six";
-const NUMBER_SEVEN = "seven";
-const NUMBER_EIGHT = "eight";
-const NUMBER_NINE = "nine";
-const NUMBER_DECIMAL = "decimal";
-const OPERATOR_CLEAR = "clear";
-const OPERATOR_DIVIDE = "divide";
-const OPERATOR_MULTIPLY = "multiply";
-const OPERATOR_SUBTRACT = "subtract";
-const OPERATOR_ADD = "add";
-const OPERATOR_EQUALS = "equals";
-/*app initial state as constant as it is used in clearing calculator*
-const INITIAL_STATE = {
-  firstDigit: "1",
-  secondDigit: "",
-  digitToAppend: "",
-  firstDigitEntered: false,
-  secondDigitEntered: false,
-  negativeSign: false,
-  operatorSelected: ""
-};
-/*---------- REACT  ----------*
-class ManoApp extends React.Component {
-  constructor(props) {
-    super(props);   
-  };
-  render() {
-    return (
-      <Calculator />
-    );
-  };
-};
-/*---------- CALCULATOR MAIN COMPONENT  ----------*
-class Calculator extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = INITIAL_STATE;
-    this.actionSelector=this.actionSelector.bind(this);
-  };
-  /*converting constants to digital numbers*
-  convertToNumber(number) {
-    switch(number){
-      case NUMBER_ZERO:
-        return 0;
-      case NUMBER_ONE:
-        return 1;
-      case NUMBER_TWO:
-        return 2;
-      case NUMBER_THREE:
-        return 3;
-      case NUMBER_FOUR:
-        return 4;
-      case NUMBER_FIVE:
-        return 5;
-      case NUMBER_SIX:
-        return 6;
-      case NUMBER_SEVEN:
-        return 7;
-      case NUMBER_EIGHT:
-        return 8;
-      case NUMBER_NINE:
-        return 9;
-      case OPERATOR_DIVIDE:
-        return "/";
-      case OPERATOR_MULTIPLY:
-        return "*";
-      case OPERATOR_SUBTRACT:
-        return "-";
-      case OPERATOR_ADD:
-        return "+";
-      case OPERATOR_EQUALS:
-        return "=";
-      case NUMBER_DECIMAL:
-        return ".";
-      default:
-        return number;
-    };
-  };
-  /*clear calculator*
-  clearCalc() {
-    this.setState(INITIAL_STATE);
-  }
-  /*check if number format is correct with regex*
-  checkNumber(currentNumber, pressedNumber) {
-    /*NOTE: these regex variables are made so that they will accept correct order in
-    which numbers are constructed, either 0.x or x.x, where x is any number.
-    So first will pass with 0 -> 0. -> 0.x, but will not accept 00. or 0x etc.
-    Second one will pass with any digit except 0 at start, followed by any numbers, dot and numbers again.
-    *
-    let zeroNumberRegex = /^0$|^0[.]$|^0[.]\d+$/; /*0.xxxxxx*
-    let anyNumberRegex = /^[1-9]\d*$|^[1-9]\d*[.]?$|^[1-9]\d*[.]?\d+$/; /*any other number*
-    let testNumber = "";
-    /*construct number with a pressed symbol for testing it, before approving*
-    testNumber = currentNumber.concat(this.convertToNumber(pressedNumber));
-    /*check if the number passes regex tests and return true or false*
-    if (zeroNumberRegex.test(testNumber)||anyNumberRegex.test(testNumber)) {
-      return true;
-    } else {
-      return false;
-    };
-  };
-  /*SELECT OPERATOR AND QUEUE ACTIONS*
-  actionSelector(actionID){
-    /*clear calculator*
-    if(actionID == OPERATOR_CLEAR) {
-      this.clearCalc();
-      return;
-    };
-    switch(actionID){
-      case OPERATOR_ADD:
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-       this.setState({operatorSelected: actionID});
-        break;
-      case OPERATOR_SUBTRACT:
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-        this.setState({operatorSelected: actionID});
-        break;
-      case OPERATOR_DIVIDE:
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-        this.setState({operatorSelected: actionID});
-        break;
-      case OPERATOR_MULTIPLY:
-        if(this.state.firstDigitEntered){
-          this.setState({secondDigitEntered: true});
-        } else {
-          this.setState({firstDigitEntered: true});
-        };
-        this.setState({operatorSelected: actionID});
-        break;
-      case OPERATOR_EQUALS:
-        this.setState({operatorSelected: actionID});
-        break;
-      default:
-        this.setState((state) => {
-          return {digitToAppend: state.digitToAppend.concat(actionID)}
-        });
-        break;
-    };
-    /*Setting first and second digit flags is done.*
-  /*call action validator here*
-  this.actionValidate();
-  console.log("state in actionSelector:"); /*DEBUG*
-  console.log(this.state); /*DEBUG*
-  };
-  /*CHECK, VALIDATE AND EXECUTE QUEUED ACTIONS*
-  actionValidate(){
-    let numberValid = this.checkNumber(this.state.firstDigit, this.convertToNumber(this.digitToAppend));
-    console.log(numberValid);
-    if(numberValid){
-      console.log("number was valid");
-      this.setState((state) => {
-        let newNumber;
-        newNumber = state.firstDigit.concat(state.digitToAppend);
-        return {firstDigit: newNumber};
-      });
-    };
-    console.log("actionValidate() called");
-    /*NOTE: this function could be action validator, that calls another function called actionExecute()*
-    /*if digit/dot has been passed, check if it is valid to be appended*
-                /*if not, break out of this function*
-                /*if valid, update digit and break out*
-  if(this.digitToAppend == NUMBER_ZERO ||
-    this.digitToAppend == NUMBER_ONE ||
-    this.digitToAppend == NUMBER_TWO ||
-    this.digitToAppend == NUMBER_THREE ||
-    this.digitToAppend == NUMBER_FOUR ||
-    this.digitToAppend == NUMBER_FIVE ||
-    this.digitToAppend == NUMBER_SIX ||
-    this.digitToAppend == NUMBER_SEVEN ||
-    this.digitToAppend == NUMBER_EIGHT ||
-    this.digitToAppend == NUMBER_NINE ||
-    this.digitToAppend == NUMBER_DECIMAL) {
-    };
-    /*check if minus sign was pressed, there is already an operator assigned and second digit exists/entered*
-                /*if true, then multiply second digit by -1 to change it's sign to opposite and break out*
-    /*check if both digits are entered and operator assigned in state*
-                /*if true, then execute the queued actions and do the following:
-                  assign the new operator immediately
-                  assign answer to first digit
-                  set firstDigitEntered to true
-                  break out*
-    /*check if both digits are entered, operator assigned in state and equal sign was pressed*
-                /*if true, then execute the queued actions and set the answer to first digit, rest set to initial state*
-  /*if an action is valid, execute it*
-  this.actionExecute;
-  };
-  actionExecute(){
-  };
-  render() {
-    return (
-    <div id="calculator">
-      <Display displayValue={this.state.displayCurrentValue} displayHistory={this.state.history}/>
-      <div id="keypad">
-        <Button id={OPERATOR_CLEAR} display="AC" action={this.actionSelector}/>
-        <Button id={OPERATOR_DIVIDE} display="/" action={this.actionSelector}/>
-        <Button id={OPERATOR_MULTIPLY} display="*" action={this.actionSelector}/>
-        <Button id={OPERATOR_SUBTRACT} display="-" action={this.actionSelector}/>
-        <Button id={OPERATOR_ADD} display="+" action={this.actionSelector}/>
-        <Button id={OPERATOR_EQUALS} display="=" action={this.actionSelector}/>
-        <Button id={NUMBER_DECIMAL} display="." action={this.actionSelector}/>
-        <Button id={NUMBER_ONE} display="1" action={this.actionSelector}/>
-        <Button id={NUMBER_TWO} display="2" action={this.actionSelector}/>
-        <Button id={NUMBER_THREE} display="3" action={this.actionSelector}/>
-        <Button id={NUMBER_FOUR} display="4" action={this.actionSelector}/>
-        <Button id={NUMBER_FIVE} display="5" action={this.actionSelector}/>
-        <Button id={NUMBER_SIX} display="6" action={this.actionSelector}/>
-        <Button id={NUMBER_SEVEN} display="7" action={this.actionSelector}/>
-        <Button id={NUMBER_EIGHT} display="8" action={this.actionSelector}/>
-        <Button id={NUMBER_NINE} display="9" action={this.actionSelector}/>
-        <Button id={NUMBER_ZERO} display="0" action={this.actionSelector}/>
-      </div>
-    </div>
-    )
-  };
-};
-/*---------- DISPLAY COMPONENT  ----------*
-class Display extends React.Component {
-  constructor(props) {
-    super(props);
-  };
-  render() {
-    return(
-      <div>
-        <div id="displayHistory">{this.props.displayHistory}</div>
-        <div id="display">{this.props.displayValue}</div>
-      </div>
-    );
-  };
-};
-/*---------- BUTTON COMPONENT  ----------*
-class Button extends React.Component {
-  constructor(props) {
-    super(props);
-  };
-  render() {
-    const styling = {
-      gridArea: this.props.id,
-      minWidth: "4ch",
-      minHeight: "4ch"
-    };
-    return(
-      <button id={this.props.id} onClick={() => this.props.action(this.props.id)} style={styling}>{this.props.display}</button>
-    );
-  };
-};
-/*---------------------------------*
-ReactDOM.render(
-    <ManoApp />
-  , document.getElementById('root'));*/
