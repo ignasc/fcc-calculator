@@ -209,6 +209,9 @@ class Calculator extends React.Component {
     else {
       this.setState({firstDigit: negativeSign ? currentDigit * (-1) : currentDigit});
     };
+
+    this.updateDisplay();
+
   };
 
   /*check if the new number would be valid*/
@@ -348,8 +351,13 @@ class Calculator extends React.Component {
   let firstDisplayDigit = this.formatForDisplay(this.state.firstDigit,1);
   let secondDisplayDigit = this.formatForDisplay(this.state.secondDigit,2);
   let operatorDisplay = this.formatForDisplay(this.state.operatorSelected,3);
+  
 
-  console.log("Formated display: " firstDisplayDigit + operatorDisplay + secondDisplayDigit);
+  this.setState((state)=>{
+    return {
+      history: firstDisplayDigit + operatorDisplay + secondDisplayDigit,
+      displayCurrentValue: state.firstDigitEntered?secondDisplayDigit:firstDisplayDigit
+   }});
 
   /*If equal is pressed, clear the history, otherwise keep adding to it.*/
   };
@@ -381,7 +389,7 @@ class Calculator extends React.Component {
         };
 
         /*check if negative sign is needed*/
-        if(this.state.negativeSign && this.state.firstDigitEntered){
+        if(this.state.negativeSign && this.state.firstDigitEntered && selector == 2){
           formatedDigit = minusSign.concat(formatedDigit);
         };
 
@@ -392,7 +400,7 @@ class Calculator extends React.Component {
 	console.log("formatForDisplay() called to format operator");
 	if(ONE_OR_TWO_REGEX.test(digit)){
 	  formatedOperator = digit[0];
-	} else if(MORE_THAN_TWO_REGEX.test(operator)){
+	} else if(MORE_THAN_TWO_REGEX.test(digit)){
 	  formatedOperator = digit[digit.length-1];
 	} else {formatedOperator = digit};
 
