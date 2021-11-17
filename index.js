@@ -17,6 +17,7 @@ const OPERATOR_SUBTRACT = "subtract";
 const OPERATOR_ADD = "add";
 const OPERATOR_EQUALS = "equals";
 
+const SINGLE_DIGIT_REGEX = new RegExp('^\d$');/*single digit only*/
 const NEGATIVE_REGEX = new RegExp('^[-/*+]\-$');/*two operators, second is minus sign*/
 const NOT_NEGATIVE_REGEX = new RegExp('^[-/*+]{2,}\-$');/*more than two any kind of operators*/
 const OPERATOR_REGEX = new RegExp('^[-/*+=]$');/*any single operator*/
@@ -169,6 +170,7 @@ class Calculator extends React.Component {
           digitMultiplier: 0.1
         });
       };
+      this.updateDisplay();
       return;
       /*and finish updateDigit() call, no need to do anything else*/
     };
@@ -180,7 +182,7 @@ class Calculator extends React.Component {
     /*check if first digit is already entered*/
     if(this.state.firstDigitEntered){
 
-      console.log("update second digit with " + digit);
+      /*update second number with new digit*/
       currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
 
       /*set multiplier to next decimal place if decimalPoint flag is true*/
@@ -191,7 +193,7 @@ class Calculator extends React.Component {
       };
 
     } else {
-      console.log("update first digit with " + digit);
+      /*update first number with new digit*/
       currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
 
       /*set multiplier to next number if it is decimal point*/
@@ -214,11 +216,11 @@ class Calculator extends React.Component {
 
   };
 
-  /*check if the new number would be valid*/
-  validateDigit(currentNumber, digitToAppend){
-    console.log("Check to append " + digitToAppend + " to number " + currentNumber);
 
-  };
+
+
+
+
 
   /*check if decimal point is needed*/
   decimalPoint(){
@@ -233,20 +235,20 @@ class Calculator extends React.Component {
   updateOperator(actionID){
 
     /*check for negative sign for second digit*/
-    let NEGATIVE_REGEX = new RegExp('^[-/*+]\-$');
+
     if(this.state.firstDigitEntered && this.state.operatorSelected != "" && NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
       console.log("convert to negative number");
       this.negativeSign();
     };
     /*if more than two operators, remove negative sign from second digit*/
-    let NOT_NEGATIVE_REGEX = new RegExp('^[-/*+]{2,}\-$');
+
     if(this.state.firstDigitEntered && NOT_NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
       console.log("convert back to positive number");
       this.setState({negativeSign: false});
     };
 
     /*execute actions if conditions are met*/
-    let OPERATOR_REGEX = new RegExp('^[-/*+=]$');
+
     if(this.state.firstDigitEntered && this.state.secondDigit != "" && OPERATOR_REGEX.test(this.convertToNumber(actionID))){
       this.executeOperation(actionID);
       return;
@@ -275,8 +277,8 @@ class Calculator extends React.Component {
     let operator = this.state.operatorSelected;
     let newOperator = "";
 
-    let ONE_OR_TWO_REGEX = new RegExp("^[/*+-]|^[/*+-]{2}$");/*no more than two operators entered*/
-    let MORE_THAN_TWO_REGEX = new RegExp("^[/*+-]{3,}$");/*more than two operators entered*/
+    
+
 
     /*DEBUG*/
     console.log("updateDigit() executed with the following settings:");
@@ -286,10 +288,7 @@ class Calculator extends React.Component {
     console.log("New operator: " + actionID);
 
     /*filter out correct operator*/
-    if(ONE_OR_TWO_REGEX.test(operator)){
-      console.log("Two operators and select first one: " + operator[0]);
-      operator = operator[0];
-    } else if(MORE_THAN_TWO_REGEX.test(operator)){
+    if(MORE_THAN_TWO_REGEX.test(operator)){
       console.log("More than two operators, select last one: " + operator[operator.length-1]);
       operator = operator[operator.length-1];
     } else{
@@ -314,7 +313,7 @@ class Calculator extends React.Component {
         console.log("WARNING: equals switch reached in executeOperation()");
         break;
     };
-    console.log("updateDigit() executed: " + this.state.firstDigit + " " + actionID + " " + this.state.secondDigit + " and the answer is " + answer);
+    console.log("executeOperation() executed: " + this.state.firstDigit + " " + actionID + " " + this.state.secondDigit + " and the answer is " + answer);
 
     
     this.setState(INITIAL_STATE);
@@ -328,6 +327,8 @@ class Calculator extends React.Component {
          operatorSelected: this.convertToNumber(actionID)
        }, ()=>{console.log("New operator set to: " + this.state.operatorSelected)});
     };
+  /*update display*/
+  this.updateDisplay();
   };
 
   updateDisplay(actionID){
@@ -367,7 +368,7 @@ class Calculator extends React.Component {
   let formatedDigit = "";
   let formatedOperator = "";
   let minusSign = "-";
-  let singleDigitRegex = new RegExp('^\d$');
+
 
     switch(selector){
       case 1:
@@ -382,7 +383,7 @@ class Calculator extends React.Component {
         formatedDigit = digit;
 
         /*single round digit with decimalPoint activated - add .0 at the end*/
-        if(singleDigitRegex.test(digit) && this.state.decimalPoint){
+        if(SINGLE_DIGIT_REGEX.test(digit) && this.state.decimalPoint){
           formatedDigit = digit.concat(".0");
         } else{
           formatedDigit = digit;
@@ -408,7 +409,7 @@ class Calculator extends React.Component {
 
       break;
       default:
-	console.log("WARNING: formatForDisplay() reached default switch state with " + selector);
+	console.log("WARNING: formatForDisplay() reached default switch state with: " + selector);
       break;
     };
   };
