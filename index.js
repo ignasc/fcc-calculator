@@ -27,7 +27,7 @@ const MORE_THAN_TWO_REGEX = new RegExp("^[/*+-]{3,}$");/*more than two operators
 /*app initial state as constant as it is used in clearing calculator*/
 const INITIAL_STATE = {
   firstDigit: 0,
-  secondDigit: "",
+  secondDigit: 0,
   digitToAppend: null,
   decimalPoint: false,
   digitMultiplier: 10,
@@ -36,6 +36,7 @@ const INITIAL_STATE = {
   secondDigitEntered: false,
   negativeSign: false,
   operatorSelected: "",
+  resetFirstDigit: false,
   displayCurrentValue: 0,
   history: ""
 };
@@ -93,6 +94,8 @@ class Calculator extends React.Component {
         return "=";
       case NUMBER_DECIMAL:
         return ".";
+      case OPERATOR_CLEAR:
+        return "C";
       default:
         console.log("WARNING: default switch executed in converToNumber() function with variable: " + number);
         return number;
@@ -102,316 +105,205 @@ class Calculator extends React.Component {
   /*MAIN FUNCTION TRIGGER BY BUTTONS*/
   actionSelector(actionID){
 
+    /*clear calculator*/
     if(actionID == OPERATOR_CLEAR){
       this.clearCalc();
       return;
     };
 
-    switch(actionID){
-      case OPERATOR_DIVIDE:
-        this.updateOperator(actionID);
+    let anyDigitRegex = new RegExp('^[0-9]$');/*any digit*/
+    let anyMathOperator = new RegExp('^[-/*+]$');/*any single math operator except equal*/
+    let button = this.convertToNumber(actionID);
+    let digit = false;
+    let selectOperation = 0;
+
+    /*Digit or operator?*/
+    if(anyDigitRegex.test(button)){digit=true};
+
+    switch(digit){
+      case true:
+        if(!this.state.firstDigitEntered){selectOperation = 1}else{selectOperation = 3};
         break;
-      case OPERATOR_MULTIPLY:
-        this.updateOperator(actionID);
-        break;
-      case OPERATOR_SUBTRACT:
-        this.updateOperator(actionID);
-        break;
-      case OPERATOR_ADD:
-        this.updateOperator(actionID);
-        break;
-      case OPERATOR_EQUALS:
-        this.updateOperator(actionID);
-        break;
-      case NUMBER_DECIMAL:
-        this.updateDigit(actionID);
-        break;
-      default:
-        this.updateDigit(this.convertToNumber(actionID));
+      case false:
+        if(anyMathOperator.test(button)){selectOperation = 2}else if(button == "="){selectOperation = 5} else {selectOperation = 4};
         break;
     };
-    /*DEBUG: console.log in a setState callback to force state update before outputing into console*/
+
+    /*should first digit be replaced if next button is a digit after previous operation*/
+    if(this.state.resetFirstDigit && digit){
+      selectOperation = 1;
+      this.setState(INITIAL_STATE);
+    };
+
+    /*operator follows second digit (execute operation immediately)*/
+    if(this.state.secondDigitEntered && anyMathOperator.test(button)){
+      let tempOperator = button;
+      this.executeMathOperation(this.state.firstDigit, this.state.secondDigit, this.state.operatorSelected);
+      this.setState({
+        operatorSelected: button,
+        firstDigitEntered: true,
+        resetFirstDigit: false,
+      });
+      return;
+    };
+
+    /*operator follows after previous operation with equal was complete*/
+    if(this.state.resetFirstDigit && anyMathOperator.test(button)){
+      let tempDigitStore = this.state.firstDigit;
+      this.clearCalc();
+      this.setState({
+        firstDigit: tempDigitStore,
+        firstDigitEntered: true,
+        resetFirstDigit: false,
+      });
+    };
+
+    /*
+    1-first digit
+    2-math operator
+    3-second digit
+    4-decimal point
+    5-equal operator
+    6-clear calculator
+    */
+    switch(selectOperation){
+      case 1:
+        this.setState((state)=>{
+          return {firstDigit: this.updateDigit(state.firstDigit, button)}
+        });
+        break;
+      case 2:
+        this.updateMathOperator(this.state.operatorSelected, button);
+        break;
+      case 3:
+        this.setState((state)=>{
+          return {secondDigit: this.updateDigit(state.secondDigit, button)}
+        });
+        break;
+      case 4:
+        this.decimalPoint();
+        break;
+      case 5:
+        this.executeMathOperation(this.state.firstDigit, this.state.secondDigit, this.state.operatorSelected);
+        break;
+      default:
+        console.log("WARNING: actionSelector() called with default switch() case, using variable selectOperation=" + selectOperation);
+        return;
+    };
+
     this.setState({},()=>{console.log(this.state)});
-    this.updateDisplay(actionID);
   };
 
-  /*clear calculator*/
+  /*EXECUTE OPERATION*/
+  executeMathOperation(firstDigit, secondDigit, operator){
+    let answer;
+
+    switch(operator){
+      case "/":
+        answer = firstDigit / secondDigit;
+        break;
+      case "*":
+        answer = firstDigit * secondDigit;
+        break;
+      case "-":
+        answer = firstDigit - secondDigit;
+        break;
+      case "+":
+        answer = firstDigit + secondDigit;
+        break;
+      default:
+        console.log("WARNING: default switch case for executeMathOperation() called with: " + firstDigit + operator + secondDigit);
+    };
+    console.log("Math: " + firstDigit + operator + secondDigit + "=" + answer);
+
+    /*update state with answer*/
+    this.setState(INITIAL_STATE);
+    this.setState({firstDigit: answer, resetFirstDigit: true});
+  };
+
+  /*CLEAR CALCULATOR*/
   clearCalc() {
     this.setState(INITIAL_STATE);
   };
 
-  /*set digit to negative number*/
-  negativeSign(){
-    /*only call this setState once as all consequtive sign handling is done in updateDigit()*/
-    if(this.state.negativeSign){
-      return;
-    }else{
+  /*ADD NEW DIGIT TO THE NUMBER*/
+  updateDigit(number, digit){
+
+    /*special case for negativeSign() call*/
+    if(digit == "negative"){
       this.setState((state)=>{
-	return{
-	  negativeSign: true,
-	  secondDigit: state.secondDigit * (-1)
-	};
+        return{secondDigit: state.secondDigit * (-1)};
       });
-    };
-    
-  };
-
-  /*update digit with new pressed number*/
-  updateDigit(digit){
-
-    /*check if decimal point was pressed*/
-    if(digit == NUMBER_DECIMAL){
-      /*check if it is already initialised to avoid reseting multiplier*/
-      if(this.state.decimalPoint){
-        return;
-      } else {
-        this.setState({
-          decimalPoint: true,
-          digitMultiplier: 0.1
-        });
-      };
-      this.updateDisplay();
-      return;
-      /*and finish updateDigit() call, no need to do anything else*/
-    };
-
-    /*Math.abs is used to remove negative sign if it is present*/
-    let currentDigit = this.state.firstDigitEntered ? Math.abs(this.state.secondDigit) : Math.abs(this.state.firstDigit);
-    let negativeSign = this.state.negativeSign ? true : false;
-
-    /*check if first digit is already entered*/
-    if(this.state.firstDigitEntered){
-
-      /*update second number with new digit*/
-      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
-
-      /*set multiplier to next decimal place if decimalPoint flag is true*/
-      if(this.state.decimalPoint){
-        this.setState((state)=>{
-          return {digitMultiplier: state.digitMultiplier * 0.1};
-        });
-      };
-
-    } else {
-      /*update first number with new digit*/
-      currentDigit = this.state.decimalPoint ? currentDigit + digit*this.state.digitMultiplier : currentDigit*10 + digit;
-
-      /*set multiplier to next number if it is decimal point*/
-      if(this.state.decimalPoint){
-        this.setState((state)=>{
-          return {digitMultiplier: state.digitMultiplier * 0.1};
-        });
-      };
-    };
-
-    /*update state with a new number (also check if negative sign is needed)*/
-    if(this.state.firstDigitEntered){
-      this.setState({secondDigit: negativeSign ? currentDigit * (-1) : currentDigit});
-    }
-    else {
-      this.setState({firstDigit: negativeSign ? currentDigit * (-1) : currentDigit});
-    };
-
-    this.updateDisplay();
-
-  };
-
-
-
-
-
-
-
-  /*check if decimal point is needed*/
-  decimalPoint(){
-    console.log("decimalPoint() called");
-    if(this.state.decimalPoint){
-      return true;
-    } else {
-      return false;
-    };
-  };
-
-  updateOperator(actionID){
-
-    /*check for negative sign for second digit*/
-
-    if(this.state.firstDigitEntered && this.state.operatorSelected != "" && NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
-      console.log("convert to negative number");
-      this.negativeSign();
-    };
-    /*if more than two operators, remove negative sign from second digit*/
-
-    if(this.state.firstDigitEntered && NOT_NEGATIVE_REGEX.test(this.state.operatorSelected.concat(this.convertToNumber(actionID)))){
-      console.log("convert back to positive number");
-      this.setState({negativeSign: false});
-    };
-
-    /*execute actions if conditions are met*/
-
-    if(this.state.firstDigitEntered && this.state.secondDigit != "" && OPERATOR_REGEX.test(this.convertToNumber(actionID))){
-      this.executeOperation(actionID);
       return;
     };
 
-    /*to prevent adding equal to operators*/
-    if(actionID == OPERATOR_EQUALS){console.log("updateOperator() called with EQUAL parameter");return;};
+    /*set second digit flag to true if first is entered*/
+    if(this.state.firstDigitEntered){
+      this.setState({secondDigitEntered: true});
+    };
 
-    /*first digit entered (set it only once)*/
+    let currentDigit = Math.abs(number);
+    let multiplier = this.state.digitMultiplier;
+    let finalNumber = 0;
+    console.log("updateDigit() called. Add " + digit + " to " + currentDigit);
+
+    if(!this.state.decimalPoint) {
+      finalNumber = currentDigit * multiplier + digit;
+    } else {
+      finalNumber = currentDigit + digit * multiplier;
+      this.setState({digitMultiplier: multiplier / 10});
+    };
+
+    /*check for negative sign*/
+    if(this.state.negativeSign){finalNumber = finalNumber * (-1)};
+
+    return finalNumber;
+  };
+
+  /*ADD OR UPDATE MATH OPERATOR*/
+  updateMathOperator(existingOperator, addOperator){
+    let negativeSignRegex = new RegExp('^[-/\*+]-$');/*to test if negative sign is needed*/
+    let positiveSignRegex = new RegExp('^[-/\*+][/\*+]$');/*to test if negative sign is NOT needed*/
+    let currentOperator = existingOperator;
+    let newOperator = addOperator;
+
+    /*set first digit as complete (this is called only once)*/
     if(!this.state.firstDigitEntered){
       this.setState({
         firstDigitEntered: true,
         decimalPoint: false,
-        digitMultiplier: 10
+        digitMultiplier: 10});
+    };
+
+    /*test for negative sign*/
+    if(negativeSignRegex.test(currentOperator.concat(newOperator)) && !this.state.negativeSign){
+      this.negativeSign();
+      console.log("Enable negative sign");
+      return;
+    } else if(!negativeSignRegex.test(currentOperator.concat(newOperator)) && this.state.negativeSign) {
+      this.negativeSign();
+      console.log("Disable negative sign");
+    };
+    
+    this.setState({operatorSelected: newOperator});
+  };
+
+  /*ADD OR UPDATE DECIMAL POINT*/
+  decimalPoint(){
+    /*enable decimal point (this is called only once)*/
+    if(!this.state.decimalPoint){
+      this.setState({
+        decimalPoint: true,
+        digitMultiplier: 0.1
       });
     };
+  };
 
+  /*SET NEGATIVE SIGN FLAG*/
+  negativeSign(){
     this.setState((state)=>{
-      return{operatorSelected: state.operatorSelected.concat(this.convertToNumber(actionID))};
-      }, ()=>{console.log("Operator check: " + this.state.operatorSelected)
-    });
-  };
-
-  executeOperation(actionID){
-    let answer;
-    let operator = this.state.operatorSelected;
-    let newOperator = "";
-
-    
-
-
-    /*DEBUG*/
-    console.log("updateDigit() executed with the following settings:");
-    console.log("First Digit: " + this.state.firstDigit);
-    console.log("Second Digit: " + this.state.secondDigit);
-    console.log("Operator: " + this.state.operatorSelected);
-    console.log("New operator: " + actionID);
-
-    /*filter out correct operator*/
-    if(MORE_THAN_TWO_REGEX.test(operator)){
-      console.log("More than two operators, select last one: " + operator[operator.length-1]);
-      operator = operator[operator.length-1];
-    } else{
-      console.log("WARNING: executeOperation() called with unknown operator: " + operator);
-    };
-
-
-    switch(operator){
-      case "/":
-        answer = this.state.firstDigit / this.state.secondDigit;
-        break;
-      case "*":
-        answer = this.state.firstDigit * this.state.secondDigit;
-        break;
-      case "-":
-        answer = this.state.firstDigit - this.state.secondDigit;
-        break;
-      case "+":
-        answer = this.state.firstDigit + this.state.secondDigit;
-        break;
-      case "=":
-        console.log("WARNING: equals switch reached in executeOperation()");
-        break;
-    };
-    console.log("executeOperation() executed: " + this.state.firstDigit + " " + actionID + " " + this.state.secondDigit + " and the answer is " + answer);
-
-    
-    this.setState(INITIAL_STATE);
-    this.setState({
-      firstDigit: answer,
-      firstDigitEntered: true
-    }, ()=>{console.log(this.state)});
-
-    if(actionID != OPERATOR_EQUALS){
-       this.setState({
-         operatorSelected: this.convertToNumber(actionID)
-       }, ()=>{console.log("New operator set to: " + this.state.operatorSelected)});
-    };
-  /*update display*/
-  this.updateDisplay();
-  };
-
-  updateDisplay(actionID){
-  /*Available parameters to use:
-
-  firstDigit: 0,
-  secondDigit: "",
-  digitToAppend: null,
-  decimalPoint: false,
-  digitMultiplier: 10,
-  finalAnswer: null,
-  firstDigitEntered: false,
-  secondDigitEntered: false,
-  negativeSign: false,
-  operatorSelected: "",
-  displayCurrentValue: 0,
-  history: ""
-
-  */
-
-  let firstDisplayDigit = this.formatForDisplay(this.state.firstDigit,1);
-  let secondDisplayDigit = this.formatForDisplay(this.state.secondDigit,2);
-  let operatorDisplay = this.formatForDisplay(this.state.operatorSelected,3);
-  
-
-  this.setState((state)=>{
-    return {
-      history: firstDisplayDigit + operatorDisplay + secondDisplayDigit,
-      displayCurrentValue: state.firstDigitEntered?secondDisplayDigit:firstDisplayDigit
-   }});
-
-  /*If equal is pressed, clear the history, otherwise keep adding to it.*/
-  };
-
-  formatForDisplay(digit, selector){/*Selector: 1-first digit, 2-second digit, 3-operator*/
-
-  let formatedDigit = "";
-  let formatedOperator = "";
-  let minusSign = "-";
-
-
-    switch(selector){
-      case 1:
-      case 2:
-
-        /*if not entered, skip*/
-        if(digit == ""){
-          return "";
-        };
-
-        digit = Math.abs(digit);
-        formatedDigit = digit;
-
-        /*single round digit with decimalPoint activated - add .0 at the end*/
-        if(SINGLE_DIGIT_REGEX.test(digit) && this.state.decimalPoint){
-          formatedDigit = digit.concat(".0");
-        } else{
-          formatedDigit = digit;
-        };
-
-        /*check if negative sign is needed*/
-        if(this.state.negativeSign && this.state.firstDigitEntered && selector == 2){
-          formatedDigit = minusSign.concat(formatedDigit);
-        };
-
-        return formatedDigit;
-
-      break;
-      case 3:
-	console.log("formatForDisplay() called to format operator");
-	if(ONE_OR_TWO_REGEX.test(digit)){
-	  formatedOperator = digit[0];
-	} else if(MORE_THAN_TWO_REGEX.test(digit)){
-	  formatedOperator = digit[digit.length-1];
-	} else {formatedOperator = digit};
-
-	return formatedOperator;
-
-      break;
-      default:
-	console.log("WARNING: formatForDisplay() reached default switch state with: " + selector);
-      break;
-    };
+      return {negativeSign: state.negativeSign ? false : true};
+    }, this.updateDigit(this.state.secondDigit,"negative"));
   };
 
   render() {
@@ -475,3 +367,4 @@ class Button extends React.Component {
 ReactDOM.render(
     <ManoApp />
   , document.getElementById('root'));
+  
