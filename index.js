@@ -192,6 +192,7 @@ class Calculator extends React.Component {
     };
 
     this.setState({},()=>{console.log(this.state)});
+    this.updateDisplay();
   };
 
   /*EXECUTE OPERATION*/
@@ -230,7 +231,7 @@ class Calculator extends React.Component {
   updateDigit(number, digit){
 
     /*special case for negativeSign() call*/
-    if(digit == "negative"){
+    if(digit == "negative" && this.state.secondDigit != 0){
       this.setState((state)=>{
         return{secondDigit: state.secondDigit * (-1)};
       });
@@ -303,7 +304,28 @@ class Calculator extends React.Component {
   negativeSign(){
     this.setState((state)=>{
       return {negativeSign: state.negativeSign ? false : true};
-    }, this.updateDigit(this.state.secondDigit,"negative"));
+    }, this.updateDigit(this.state.secondDigit,"negative"));/*immediately update digit with negative sign*/
+  };
+
+  /*UPDATE CALCULATOR DISPLAY*/
+  updateDisplay(){
+    console.log("updateDisplay() called");
+    return;
+
+    let displayValue = this.state.displayCurrentValue;
+    let displayHistory = this.state.history;
+
+    /*display current digit being entered*/
+    if(!this.state.firstDigitEntered){
+      displayValue = this.state.firstDigit;
+    } else {
+      displayValue = this.state.secondDigit;
+    };
+
+    this.setState({
+      displayCurrentValue: displayValue,
+      history: displayHistory
+    });    
   };
 
   render() {
