@@ -158,6 +158,7 @@ class Calculator extends React.Component {
       });
     };
 
+
     /*
     1-first digit
     2-math operator
@@ -191,8 +192,11 @@ class Calculator extends React.Component {
         return;
     };
 
-    this.setState({},()=>{console.log(this.state)});
-    this.updateDisplay();
+    /*Seems a bit dodgy way to ensure that updateDisplay() is called after all math operations are saved to state. But it works...*/
+    this.setState({},()=>{this.updateDisplay(); console.log(this.state)});
+    
+    
+
   };
 
   /*EXECUTE OPERATION*/
@@ -231,7 +235,7 @@ class Calculator extends React.Component {
   updateDigit(number, digit){
 
     /*special case for negativeSign() call*/
-    if(digit == "negative" && this.state.secondDigit != 0){
+    if(digit == "negative"){
       this.setState((state)=>{
         return{secondDigit: state.secondDigit * (-1)};
       });
@@ -246,7 +250,6 @@ class Calculator extends React.Component {
     let currentDigit = Math.abs(number);
     let multiplier = this.state.digitMultiplier;
     let finalNumber = 0;
-    console.log("updateDigit() called. Add " + digit + " to " + currentDigit);
 
     if(!this.state.decimalPoint) {
       finalNumber = currentDigit * multiplier + digit;
@@ -310,10 +313,9 @@ class Calculator extends React.Component {
   /*UPDATE CALCULATOR DISPLAY*/
   updateDisplay(){
     console.log("updateDisplay() called");
-    return;
 
-    let displayValue = this.state.displayCurrentValue;
-    let displayHistory = this.state.history;
+    let displayValue = this.state.displayCurrentValue.toString();
+    let displayHistory = this.state.history.toString();
 
     /*display current digit being entered*/
     if(!this.state.firstDigitEntered){
@@ -322,10 +324,16 @@ class Calculator extends React.Component {
       displayValue = this.state.secondDigit;
     };
 
+    /*if round digit with decimal point activated, add .0 to the end*/
+    let firstDecimalPoint = new RegExp('^[0-9]{1,}\.?0?$');
+    if(firstDecimalPoint.test(displayValue) && this.state.decimalPoint){
+      displayValue = displayValue.toString().concat(".0");
+    };
+
     this.setState({
       displayCurrentValue: displayValue,
       history: displayHistory
-    });    
+    }, console.log("updateDisplay() finished executing"));    
   };
 
   render() {
