@@ -1,6 +1,6 @@
 # JavaScript Calculator
 
-# Quick info:
+## Quick info:
 The build is finished to meet the requirements of the FreeCodeCamp test.
 
 Visual aspects of the build has not been fully implemented yet.
